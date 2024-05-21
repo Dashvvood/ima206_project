@@ -135,7 +135,6 @@ class BarlowTwins(L.LightningModule):
         }
         
         
-        
 class OnlineFineTuner(Callback):
     def __init__(
         self,
@@ -208,4 +207,13 @@ class OnlineFineTuner(Callback):
         acc = accuracy(F.softmax(preds, dim=1), y.squeeze(), task="multiclass", num_classes=self.num_classes)
         pl_module.log("online_val_acc", acc, on_step=False, on_epoch=True, sync_dist=True)
         pl_module.log("online_val_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
+
+class BarlowTwinsLinearProbe(L.LightningModule):
+    def __init__(
+        self, 
+        backbone,
+        
+    ):
+        pass
+        
         
