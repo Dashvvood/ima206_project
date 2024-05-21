@@ -89,6 +89,7 @@ model = BarlowTwins(
     num_training_samples=len(train_dataset),
     batch_size=opts.batch_size,
     z_dim=z_dim,
+    learning_rate=opts.lr
 )
 
 online_finetuner = OnlineFineTuner(

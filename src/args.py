@@ -8,10 +8,10 @@ parser.add_argument(
     "--batch_size", type=int, default=8
 )
 parser.add_argument(
-    "--warmup_steps", type=int, default=1000
+    "--warmup_steps", type=float, default=1000
 )
 parser.add_argument(
-    "--train_steps", type=int, default=1e5
+    "--train_steps", type=float, default=1e5
 )
 parser.add_argument(
     "--num_workers", type=int, default=16
