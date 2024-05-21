@@ -8,6 +8,12 @@ parser.add_argument(
     "--batch_size", type=int, default=8
 )
 parser.add_argument(
+    "--warmup_steps", type=int, default=1000
+)
+parser.add_argument(
+    "--train_steps", type=int, default=1e5
+)
+parser.add_argument(
     "--num_workers", type=int, default=16
 )
 parser.add_argument(
@@ -75,6 +81,9 @@ parser.add_argument(
 
 
 opts, missing = parser.parse_known_args()
+
+opts.warmup_steps = int(opts.warmup_steps)
+opts.train_steps = int(opts.train_steps)
 
 print(f"{opts = }")
 print(f"{missing = }")

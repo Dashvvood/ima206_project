@@ -108,7 +108,9 @@ model = BarlowTwinsForImageClassification(
     embedding_dim=z_dim,
     num_class=train_dataset.n_classes,
     criterion=nn.CrossEntropyLoss(),
-    finetune=True,   
+    finetune=True,
+    warmup_steps=opts.warmup_steps,
+    train_steps=opts.train_steps,
 )
 
 checkpoint_callback = ModelCheckpoint(
