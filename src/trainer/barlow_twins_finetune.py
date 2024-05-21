@@ -77,7 +77,7 @@ train_loader = DataLoader(
 val_loader = DataLoader(
     val_dataset, batch_size=opts.batch_size, 
     shuffle=False, num_workers=opts.num_workers, 
-    drop_last=True
+    drop_last=False
 )
 
 
