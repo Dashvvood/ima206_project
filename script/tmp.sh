@@ -1,0 +1,1 @@
+python barlow_twins_trainer.py --batch_size 2 --num_workers 4 --img_size 28 ckpt_dir ../../ckpt/ --log_dir ../../log/ --ps 123
