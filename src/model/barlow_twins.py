@@ -106,7 +106,7 @@ class BarlowTwins(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
-        self.log("train_loss", loss, on_step=True, on_epoch=False)
+        self.log("train_loss", loss, on_step=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
