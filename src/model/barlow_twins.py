@@ -307,4 +307,4 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         
         labels_hat = torch.argmax(out, dim=1)
         val_acc = torch.sum(y == labels_hat).item() / (len(y) * 1.0)
-        self.log_dict({'val_loss': loss, 'val_acc': val_acc}, on_step=True, on_epoch=False)
+        self.log_dict({'val_loss': loss, 'val_acc': val_acc}, on_step=False, on_epoch=True)
