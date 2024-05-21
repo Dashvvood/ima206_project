@@ -111,8 +111,9 @@ class BarlowTwins(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
-        self.log("val_loss", loss, on_step=False, on_epoch=True)
-
+        self.log("val_loss", loss, on_step=False, on_epoch=True)  
+        return loss
+    
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
             self.parameters(), 
@@ -208,12 +209,102 @@ class OnlineFineTuner(Callback):
         pl_module.log("online_val_acc", acc, on_step=False, on_epoch=True, sync_dist=True)
         pl_module.log("online_val_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
 
-class BarlowTwinsLinearProbe(L.LightningModule):
+class BarlowTwinsForImageClassification(L.LightningModule):
     def __init__(
         self, 
         backbone,
+        embedding_dim: int,
+        num_class: int,
+        criterion=nn.CrossEntropyLoss(),
+        learning_rate=1e-4,
+        warmup_steps=1e3,
+        train_steps=1e5,
+        max_epochs=200,
+        finetune=True,
         
     ):
-        pass
+        super().__init__()
         
+        self.backbone = backbone
         
+        self.classifier = nn.Linear(
+            in_features=embedding_dim, 
+            out_features=num_class
+        )
+        self.finetune = finetune
+        if finetune:
+            self.backbone.eval()
+        else:
+            self.backbone.train()
+        self.criterion = criterion
+        self.learning_rate = learning_rate
+        self.warmup_steps = warmup_steps
+        self.train_steps = train_steps
+        self.max_epochs = max_epochs
+        
+    def forward(self, inputs):
+        if self.finetune:
+            with torch.no_grad():
+                x = self.backbone.encoder(inputs)
+                x = self.backbone.projection_head(x)
+                x = x.detach()
+        else:
+            x = self.backbone(inputs)
+        return self.classifier(x)
+    
+    def configure_optimizers(self):
+        if self.finetune:
+            optimizer = torch.optim.AdamW(
+                self.parameters(), 
+                lr=self.learning_rate, betas=[0.9, 0.999], 
+                weight_decay=1e-2,
+            )
+        else:
+            optimizer = torch.optim.AdamW(
+                self.classifier.parameters(), 
+                lr=self.learning_rate, betas=[0.9, 0.999], 
+                weight_decay=1e-2,
+            )
+        
+        scheduler = get_cosine_schedule_with_warmup(
+            optimizer=optimizer,
+            num_warmup_steps=self.warmup_steps,
+            num_training_steps=self.train_steps,
+        )
+        
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+            }
+        }
+        
+    def predict_step(self, batch, batch_idx):
+        x, y = batch
+        out = self(x)
+        labels_hat = torch.argmax(out.logits, dim=1)
+        return labels_hat
+    
+    def training_step(self, batch, batch_idx):
+        (x1, x2, x), y = batch
+        x = x.to(self.device)
+        y = y.to(self.device)
+        preds = self(x)
+        
+        loss = self.criterion(preds, y.squeeze())
+        self.log("train_loss", loss, on_step=True, on_epoch=False)
+        return loss
+    
+    
+    def validation_step(self, batch, batch_idx):
+        (x1, x2, x), y = batch
+        x = x.to(self.device)
+        y = y.squeeze()
+        y = y.to(self.device)
+        out = self(x)
+        
+        loss = self.criterion(out, y)
+        
+        labels_hat = torch.argmax(out, dim=1)
+        val_acc = torch.sum(y == labels_hat).item() / (len(y) * 1.0)
+        self.log_dict({'val_loss': loss, 'val_acc': val_acc}, on_step=True, on_epoch=False)

@@ -38,6 +38,7 @@ from model.barlow_twins import (
     BarlowTwinsLoss,
     get_modified_resnet18,
     OnlineFineTuner,
+    BarlowTwinsForImageClassification
 )
 
 train_transform = BarlowTwinsTransform(
@@ -79,3 +80,62 @@ val_loader = DataLoader(
     drop_last=True
 )
 
+
+encoder = get_modified_resnet18()
+encoder_out_dim = 512
+z_dim = 128
+
+if opts.ckpt != "" and os.path.exists(opts.ckpt):
+    barlow_model = BarlowTwins.load_from_checkpoint(
+        opts.ckpt,
+        encoder=encoder,
+        encoder_out_dim=encoder_out_dim,
+        num_training_samples=len(train_dataset),
+        batch_size=opts.batch_size,
+        z_dim=z_dim,
+    )
+else:
+    barlow_model = BarlowTwins(
+        encoder=encoder,
+        encoder_out_dim=encoder_out_dim,
+        num_training_samples=len(train_dataset),
+        batch_size=opts.batch_size,
+        z_dim=z_dim,
+    )
+
+model = BarlowTwinsForImageClassification(
+    backbone=barlow_model,
+    embedding_dim=z_dim,
+    num_class=train_dataset.n_classes,
+    criterion=nn.CrossEntropyLoss(),
+    finetune=True,   
+)
+
+checkpoint_callback = ModelCheckpoint(
+    every_n_epochs=10, save_top_k=-1, save_last=True,
+    dirpath=os.path.join(opts.ckpt_dir, o_d),
+    monitor="val_loss", mode="min"
+)
+
+wandblogger = WandbLogger(
+    name=f"{o_d}_{thisfile}_{opts.ps}", 
+    save_dir=opts.log_dir, 
+    project="barlow_twins",
+)
+
+trainer = L.Trainer(
+    max_epochs=opts.max_epochs,
+    accelerator="gpu",
+    devices=opts.device_num,
+    fast_dev_run=opts.fast,
+    logger=wandblogger,
+    accumulate_grad_batches=opts.accumulate_grad_batches,
+    log_every_n_steps=10,
+    callbacks=[checkpoint_callback],
+)
+
+trainer.fit(
+    model=model,
+    train_dataloaders=train_loader,
+    val_dataloaders=val_loader,
+)
