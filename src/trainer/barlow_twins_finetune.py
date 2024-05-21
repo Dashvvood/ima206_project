@@ -114,7 +114,7 @@ model = BarlowTwinsForImageClassification(
 )
 
 checkpoint_callback = ModelCheckpoint(
-    every_n_epochs=10, save_top_k=-1, save_last=True,
+    save_top_k=3, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
     monitor="val_loss", mode="min"
 )
