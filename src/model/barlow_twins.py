@@ -31,7 +31,7 @@ class BarlowTwinsLoss(nn.Module):
 
         cross_corr = torch.matmul(z1_norm.T, z2_norm) / self.batch_size
 
-        on_diag = torch.diagonal(cross_corr).add_(-1a).pow_(2).sum()
+        on_diag = torch.diagonal(cross_corr).add_(-1).pow_(2).sum()
         off_diag = self.off_diagonal_ele(cross_corr).pow_(2).sum()
 
         return on_diag + self.lambda_coeff * off_diag
