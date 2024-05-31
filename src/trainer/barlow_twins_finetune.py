@@ -71,15 +71,17 @@ val_dataset = PathMNIST(
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
     shuffle=True, num_workers=opts.num_workers, 
-    drop_last=True
+    drop_last=True,
+    collate_fn=PathMNIST.collate_fn,
 )
 
 val_loader = DataLoader(
     val_dataset, batch_size=opts.batch_size, 
     shuffle=False, num_workers=opts.num_workers, 
-    drop_last=False
-)
+    drop_last=False,
+    collate_fn=PathMNIST.collate_fn,
 
+)
 
 encoder = get_modified_resnet18()
 encoder_out_dim = 512
@@ -106,17 +108,17 @@ else:
 model = BarlowTwinsForImageClassification(
     backbone=barlow_model,
     embedding_dim=z_dim,
-    num_class=train_dataset.n_classes,
+    num_classes=train_dataset.n_classes,
     criterion=nn.CrossEntropyLoss(),
     finetune=True,
-    warmup_steps=opts.warmup_steps,
-    train_steps=opts.train_steps,
+    warmup_steps=opts.warmup_epochs * len(train_loader),
+    train_steps=opts.max_epochs * len(train_loader),
 )
 
 checkpoint_callback = ModelCheckpoint(
-    save_top_k=3, save_last=True,
+    save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
-    monitor="val_loss", mode="min"
+    monitor="val_acc", mode="max"
 )
 
 wandblogger = WandbLogger(

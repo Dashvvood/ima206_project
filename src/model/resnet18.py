@@ -47,7 +47,7 @@ class ResNet18Classifier(L.LightningModule):
         loss = self.criterion(pred, y)
         self.log_dict({
             "train_loss": loss,
-        }, on_step=True, on_epoch=False)
+        }, on_step=True, on_epoch=True)
         return loss
     
     def validation_step(self, batch, batch_idx):

@@ -7,7 +7,7 @@ import lightning as L
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 from transformers import get_cosine_schedule_with_warmup
 import torch.nn.functional as F
-from torchmetrics.functional import accuracy
+from torchmetrics import Accuracy
 
 class BarlowTwinsLoss(nn.Module):
     def __init__(self, batch_size, lambda_coeff=5e-3, z_dim=128):
@@ -31,7 +31,7 @@ class BarlowTwinsLoss(nn.Module):
 
         cross_corr = torch.matmul(z1_norm.T, z2_norm) / self.batch_size
 
-        on_diag = torch.diagonal(cross_corr).add_(-1).pow_(2).sum()
+        on_diag = torch.diagonal(cross_corr).add_(-1a).pow_(2).sum()
         off_diag = self.off_diagonal_ele(cross_corr).pow_(2).sum()
 
         return on_diag + self.lambda_coeff * off_diag
@@ -214,7 +214,7 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         self, 
         backbone,
         embedding_dim: int,
-        num_class: int,
+        num_classes: int,
         criterion=nn.CrossEntropyLoss(),
         learning_rate=1e-4,
         warmup_steps=1e3,
@@ -225,11 +225,12 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         
+        self.num_classes = num_classes
         self.backbone = backbone
         
         self.classifier = nn.Linear(
             in_features=embedding_dim, 
-            out_features=num_class
+            out_features=num_classes
         )
         self.finetune = finetune
         if finetune:
@@ -241,13 +242,15 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         self.warmup_steps = warmup_steps
         self.train_steps = train_steps
         self.max_epochs = max_epochs
-        
+        self.acc = Accuracy(task="binary" if num_classes == 2 else "multiclass", num_classes=num_classes)
+
+    @torch.no_grad()
+    def _encode(self, inputs):
+        return self.backbone.encoder(inputs)
+    
     def forward(self, inputs):
         if self.finetune:
-            with torch.no_grad():
-                x = self.backbone.encoder(inputs)
-                x = self.backbone.projection_head(x)
-                x = x.detach()
+            x = self._encode(inputs)
         else:
             x = self.backbone(inputs)
         return self.classifier(x)
@@ -286,24 +289,20 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         return labels_hat
     
     def training_step(self, batch, batch_idx):
-        (x1, x2, x), y = batch
-        x = x.to(self.device)
-        y = y.to(self.device)
-        preds = self(x)
-        
-        loss = self.criterion(preds, y)
-        self.log("train_loss", loss, on_step=True, on_epoch=False)
+        X, y = batch
+        pred = self(X)
+        loss = self.criterion(pred, y)
+        self.log("train_loss", loss, on_step=True, on_epoch=True)
         return loss
     
-    
     def validation_step(self, batch, batch_idx):
-        (x1, x2, x), y = batch
-        x = x.to(self.device)
-        y = y.to(self.device)
-        out = self(x)
+        X, y = batch
+        pred = self(X)
+        loss = self.criterion(pred, y)
+        val_acc = self.acc(pred, y)
+        self.log_dict({
+            "val_loss": loss,
+            "val_acc": val_acc
+        }, on_step=False, on_epoch=True)
         
-        loss = self.criterion(out, y)
-        
-        labels_hat = torch.argmax(out, dim=1)
-        val_acc = torch.sum(y == labels_hat).item() / (len(y) * 1.0)
-        self.log_dict({'val_loss': loss, 'val_acc': val_acc}, on_step=False, on_epoch=True)
+        return loss
