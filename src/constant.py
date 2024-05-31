@@ -1,0 +1,18 @@
+import argparse
+
+MEDMNIST_ROOT = "../data/medmnist2d/"
+PathMNIST_MEAN = [0.73765225, 0.53090023, 0.70307171]
+PathMNIST_STD = [0.12319908, 0.17607205, 0.12394462]
+PathMNIST_HIST = [9366, 9510, 10362, 10404, 8010, 12187, 7892, 9408, 12893]
+
+
+PathMNIST = {
+    "ROOT": "../data/medmnist2d/",
+    "MEAN": [0.73765225, 0.53090023, 0.70307171],
+    "STD": [0.12319908, 0.17607205, 0.12394462],
+    "HIST": [9366, 9510, 10362, 10404, 8010, 12187, 7892, 9408, 12893],
+}
+
+PathMNISTmeta = argparse.Namespace(**PathMNIST)
+
+
