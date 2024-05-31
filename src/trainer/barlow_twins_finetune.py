@@ -41,19 +41,17 @@ from model.barlow_twins import (
     BarlowTwinsForImageClassification
 )
 
-train_transform = BarlowTwinsTransform(
-    train=True, 
-    input_height=opts.img_size, 
-    gaussian_blur=False, jitter_strength=0.5, 
-    normalize=pathmnist_normalization()
-)
+train_transform = transforms.Compose([
+    transforms.RandomCrop(opts.img_size, padding=4, padding_mode="reflect"),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    pathmnist_normalization(),
+])
 
-val_transform = BarlowTwinsTransform(
-    train=False, 
-    input_height=opts.img_size, 
-    gaussian_blur=False, jitter_strength=0.5, 
-    normalize=pathmnist_normalization()
-)
+val_transform = transforms.Compose([
+    transforms.ToTensor(),
+    pathmnist_normalization(),
+])
 
 train_dataset = PathMNIST(
     split="train", download=False, 
@@ -66,7 +64,6 @@ val_dataset = PathMNIST(
     transform=val_transform,
     root="../../data/medmnist2d/"
 )
-
 
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
@@ -107,7 +104,7 @@ else:
 
 model = BarlowTwinsForImageClassification(
     backbone=barlow_model,
-    embedding_dim=z_dim,
+    embedding_dim=encoder_out_dim,
     num_classes=train_dataset.n_classes,
     criterion=nn.CrossEntropyLoss(),
     finetune=True,

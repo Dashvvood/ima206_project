@@ -184,7 +184,7 @@ class OnlineFineTuner(Callback):
         loss.backward()
         self.optimizer.step()
         
-        acc = accuracy(F.softmax(preds, dim=1), y, task="multiclass", num_classes=self.num_classes)
+        acc = Accuracy(F.softmax(preds, dim=1), y, task="multiclass", num_classes=self.num_classes)
         pl_module.log("online_train_acc", acc, on_step=True, on_epoch=False)
         pl_module.log("online_train_loss", loss, on_step=True, on_epoch=False)
 
@@ -205,7 +205,7 @@ class OnlineFineTuner(Callback):
         preds = pl_module.online_finetuner(feats)
         loss = F.cross_entropy(preds, y)
 
-        acc = accuracy(F.softmax(preds, dim=1), y, task="multiclass", num_classes=self.num_classes)
+        acc = Accuracy(F.softmax(preds, dim=1), y, task="multiclass", num_classes=self.num_classes)
         pl_module.log("online_val_acc", acc, on_step=False, on_epoch=True, sync_dist=True)
         pl_module.log("online_val_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
 
@@ -258,7 +258,7 @@ class BarlowTwinsForImageClassification(L.LightningModule):
     def configure_optimizers(self):
         if self.finetune:
             optimizer = torch.optim.AdamW(
-                self.parameters(), 
+                self.classifier.parameters(), 
                 lr=self.learning_rate, betas=[0.9, 0.999], 
                 weight_decay=1e-2,
             )
