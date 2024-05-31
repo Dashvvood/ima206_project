@@ -72,7 +72,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--model_config", type=str, default=""
+    "--project", type=str, default="unnamed"
 )
 
 parser.add_argument(

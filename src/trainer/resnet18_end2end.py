@@ -7,6 +7,8 @@ o_d = motti.o_d()
 from args import opts
 os.makedirs(opts.log_dir, exist_ok=True)
 os.makedirs(opts.ckpt_dir, exist_ok=True)
+import logging
+logging.info(opts)
 
 from model.resnet18 import (
     ResNet18Classifier,
@@ -92,7 +94,7 @@ checkpoint_callback = ModelCheckpoint(
 wandblogger = WandbLogger(
     name=f"{o_d}_{thisfile}_{opts.ps}", 
     save_dir=opts.log_dir, 
-    project="barlow_twins",
+    project=opts.project,
 )
 
 trainer = L.Trainer(

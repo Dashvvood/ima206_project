@@ -1,4 +1,13 @@
-CUDA_VISIBLE_DEVICES=2 python barlow_twins_pretrain.py --batch_size 1024 --num_workers 32 --device_num 1 --img_size 28 -
--lr 1e-4 --ckpt_dir ../../ckpt --log_dir ../../log/ --max_epochs 100 --ps test
+python resnet18_end2end.py \
+--project resnet18_pathmnist \
+--batch_size 4 \
+--warmup_steps 1000 \
+--train_steps 10000 \
+--device_num 1 \
+--img_size 28 \
+--ckpt_dir ../../ckpt/ \
+--log_dir ../../log/ \
+--lr 1e-4 \
+--max_epochs 100 \
+--ps test
 
---batch_size 4 --num_workers 4 --device_num 1 --img_size 28 --lr 1e-4 --ckpt_dir ../../ckpt --log_dir ../../log/ --max_epochs 100 --ps test
