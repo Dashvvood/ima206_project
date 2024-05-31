@@ -221,9 +221,9 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         train_steps=1e5,
         max_epochs=200,
         finetune=True,
-        
     ):
         super().__init__()
+        self.save_hyperparameters()
         
         self.backbone = backbone
         

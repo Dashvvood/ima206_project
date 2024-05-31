@@ -4,7 +4,6 @@ motti.append_parent_dir(__file__)
 thisfile = os.path.basename(__file__).split(".")[0]
 o_d = motti.o_d()
 
-
 import lightning as L
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 from torch.utils.data import DataLoader
@@ -103,15 +102,15 @@ online_finetuner = OnlineFineTuner(
     num_classes=train_dataset.n_classes
 )
 checkpoint_callback = ModelCheckpoint(
-    save_top_k=3, save_last=True,
+    save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
-    monitor="val_loss", mode="min"
+    monitor="val_acc", mode="max"
 )
 
 wandblogger = WandbLogger(
     name=f"{o_d}_{thisfile}_{opts.ps}", 
     save_dir=opts.log_dir, 
-    project="barlow_twins",
+    project="barlow_twins_pathmnist",
 )
 
 trainer = L.Trainer(

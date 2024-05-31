@@ -7,8 +7,6 @@ o_d = motti.o_d()
 from args import opts
 os.makedirs(opts.log_dir, exist_ok=True)
 os.makedirs(opts.ckpt_dir, exist_ok=True)
-import logging
-logging.info(opts)
 
 from model.resnet18 import (
     ResNet18Classifier,
@@ -113,4 +111,3 @@ trainer.fit(
     train_dataloaders=train_loader,
     val_dataloaders=val_loader,
 )
-

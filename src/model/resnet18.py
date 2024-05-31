@@ -24,6 +24,7 @@ def get_modified_resnet18(num_classes):
 class ResNet18Classifier(L.LightningModule):
     def __init__(self, lr, num_classes, criterion, warmup_steps, train_steps) -> None:
         super().__init__()
+        self.save_hyperparameters()
         
         model = get_modified_resnet18(num_classes=num_classes)
         self.model = model
