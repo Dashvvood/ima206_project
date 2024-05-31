@@ -72,21 +72,21 @@ if opts.ckpt != "" and os.path.exists(opts.ckpt):
         checkpoint_path=opts.ckpt,
         lr=opts.lr, 
         num_classes=train_dataset.n_classes, 
-        warmup_steps=opts.warmup_steps, 
-        train_steps=opts.train_steps,
+        warmup_steps=opts.warmup_epochs * len(train_loader), 
+        train_steps=opts.max_epochs * len(train_loader),
         criterion= nn.CrossEntropyLoss()
     )
 else:
     model = ResNet18Classifier(
         lr=opts.lr, 
         num_classes=train_dataset.n_classes, 
-        warmup_steps=opts.warmup_steps, 
-        train_steps=opts.train_steps,
+        warmup_steps=opts.warmup_epochs * len(train_loader), 
+        train_steps=opts.max_epochs * len(train_loader),
         criterion= nn.CrossEntropyLoss()
     )
 
 checkpoint_callback = ModelCheckpoint(
-    save_top_k=3, save_last=True,
+    save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
     monitor="val_acc", mode="max"
 )

@@ -11,6 +11,9 @@ parser.add_argument(
     "--warmup_steps", type=float, default=1000
 )
 parser.add_argument(
+    "--warmup_epochs", type=float, default=5
+)
+parser.add_argument(
     "--train_steps", type=float, default=1e5
 )
 parser.add_argument(

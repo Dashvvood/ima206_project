@@ -178,13 +178,13 @@ class OnlineFineTuner(Callback):
 
         feats = feats.detach()
         preds = pl_module.online_finetuner(feats)
-        loss = F.cross_entropy(preds, y.squeeze())
+        loss = F.cross_entropy(preds, y)
         
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
         
-        acc = accuracy(F.softmax(preds, dim=1), y.squeeze(), task="multiclass", num_classes=self.num_classes)
+        acc = accuracy(F.softmax(preds, dim=1), y, task="multiclass", num_classes=self.num_classes)
         pl_module.log("online_train_acc", acc, on_step=True, on_epoch=False)
         pl_module.log("online_train_loss", loss, on_step=True, on_epoch=False)
 
@@ -203,9 +203,9 @@ class OnlineFineTuner(Callback):
 
         feats = feats.detach()
         preds = pl_module.online_finetuner(feats)
-        loss = F.cross_entropy(preds, y.squeeze())
+        loss = F.cross_entropy(preds, y)
 
-        acc = accuracy(F.softmax(preds, dim=1), y.squeeze(), task="multiclass", num_classes=self.num_classes)
+        acc = accuracy(F.softmax(preds, dim=1), y, task="multiclass", num_classes=self.num_classes)
         pl_module.log("online_val_acc", acc, on_step=False, on_epoch=True, sync_dist=True)
         pl_module.log("online_val_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
 
@@ -291,7 +291,7 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         y = y.to(self.device)
         preds = self(x)
         
-        loss = self.criterion(preds, y.squeeze())
+        loss = self.criterion(preds, y)
         self.log("train_loss", loss, on_step=True, on_epoch=False)
         return loss
     
@@ -299,7 +299,6 @@ class BarlowTwinsForImageClassification(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         (x1, x2, x), y = batch
         x = x.to(self.device)
-        y = y.squeeze()
         y = y.to(self.device)
         out = self(x)
         

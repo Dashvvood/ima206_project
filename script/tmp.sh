@@ -1,6 +1,6 @@
 python resnet18_end2end.py \
 --project resnet18_pathmnist \
---batch_size 4 \
+--batch_size 128 \
 --warmup_steps 1000 \
 --train_steps 10000 \
 --device_num 1 \
@@ -8,6 +8,7 @@ python resnet18_end2end.py \
 --ckpt_dir ../../ckpt/ \
 --log_dir ../../log/ \
 --lr 1e-4 \
---max_epochs 100 \
+--max_epochs 200 \
+--warmup_epochs 5 \
 --ps test
 

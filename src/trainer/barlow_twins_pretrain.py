@@ -4,15 +4,6 @@ motti.append_parent_dir(__file__)
 thisfile = os.path.basename(__file__).split(".")[0]
 o_d = motti.o_d()
 
-from functools import partial
-from typing import Sequence, Tuple, Union
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-import torchvision.transforms as transforms
-import torchvision.transforms.functional as VisionF
 
 import lightning as L
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
@@ -29,6 +20,8 @@ import numpy as np
 from args import opts
 os.makedirs(opts.log_dir, exist_ok=True)
 os.makedirs(opts.ckpt_dir, exist_ok=True)
+import logging
+logging.info(opts)
 
 from augmentation import BarlowTwinsTransform, pathmnist_normalization
 from dataset import PathMNIST
@@ -70,27 +63,40 @@ val_dataset = PathMNIST(
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
     shuffle=True, num_workers=opts.num_workers, 
-    drop_last=True
+    drop_last=True,
+    collate_fn=PathMNIST.collate_fn,
 )
 
 val_loader = DataLoader(
     val_dataset, batch_size=opts.batch_size, 
     shuffle=False, num_workers=opts.num_workers, 
-    drop_last=True
+    drop_last=True,
+    collate_fn=PathMNIST.collate_fn,
 )
 
 encoder = get_modified_resnet18()
 encoder_out_dim = 512
 z_dim = 128
 
-model = BarlowTwins(
-    encoder=encoder,
-    encoder_out_dim=encoder_out_dim,
-    num_training_samples=len(train_dataset),
-    batch_size=opts.batch_size,
-    z_dim=z_dim,
-    learning_rate=opts.lr
-)
+if opts.ckpt != "" and os.path.exists(opts.ckpt):
+    barlow_model = BarlowTwins.load_from_checkpoint(
+        opts.ckpt,
+        encoder=encoder,
+        encoder_out_dim=encoder_out_dim,
+        num_training_samples=len(train_dataset),
+        batch_size=opts.batch_size,
+        z_dim=z_dim,
+        learning_rate=opts.lr
+    )
+else:
+    barlow_model = BarlowTwins(
+        encoder=encoder,
+        encoder_out_dim=encoder_out_dim,
+        num_training_samples=len(train_dataset),
+        batch_size=opts.batch_size,
+        z_dim=z_dim,
+        learning_rate=opts.lr
+    )
 
 online_finetuner = OnlineFineTuner(
     encoder_output_dim=encoder_out_dim, 
@@ -120,7 +126,7 @@ trainer = L.Trainer(
 )
 
 trainer.fit(
-    model=model,
+    model=barlow_model,
     train_dataloaders=train_loader,
     val_dataloaders=val_loader,
 )
