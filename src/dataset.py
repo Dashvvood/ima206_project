@@ -1,5 +1,5 @@
 import torch
-import torch.utils.data as data
+import torch.utils
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 
@@ -20,7 +20,8 @@ class PathMNIST(BasePathMNIST):
     # TODO: not necessary for squeeze y's shape here.
     @staticmethod
     def collate_fn(batch):
-        pass
+        X, y = torch.utils.data.default_collate(batch)
+        return X, y.squeeze(-1)
         
     
 class TransformDataset(Dataset):
