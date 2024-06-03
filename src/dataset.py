@@ -8,6 +8,10 @@ from medmnist import PathMNIST as BasePathMNIST
 import motti
 from constant import MEDMNIST_ROOT
 
+def pathmnist_collate_fn(batch):
+    X, y = torch.utils.data.default_collate(batch)
+    return X, y.squeeze(-1)
+
 
 class PathMNIST(BasePathMNIST):
     def __init__(self, split, transform=None, target_transform=None, download=False, as_rgb=False, root=MEDMNIST_ROOT, size=None, mmap_mode=None):

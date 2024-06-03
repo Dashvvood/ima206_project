@@ -23,25 +23,11 @@ parser.add_argument(
     "--device_num", type=int, default=1
 )
 parser.add_argument(
-    "--height", type=int, default=224,
-)
-parser.add_argument(
-    "--weight", type=int, default=224,
-)
-parser.add_argument(
     "--img_size", type=int, default=28,
 )
 parser.add_argument(
-    "--processor_config", type=str, default=""
-)
-parser.add_argument(
-    "--vit_config", type=str, default=""
-)
-
-parser.add_argument(
     "--metadata", type=str, default="./data/metadataTrain.csv"
 )
-
 parser.add_argument(
     "--ckpt", type=str, default=""
 )

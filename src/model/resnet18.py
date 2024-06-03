@@ -10,7 +10,7 @@ import torch.nn.functional as F
 # from torchmetrics.functional import accuracy
 from torchmetrics import Accuracy
 
-def get_modified_resnet18(num_classes):
+def _get_modified_resnet18(num_classes):
     model = resnet18(zero_init_residual=True, weights=None)
 
     # for CIFAR10, replace the first 7x7 conv with smaller 3x3 conv and remove the first maxpool
@@ -26,7 +26,8 @@ class ResNet18Classifier(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         
-        model = get_modified_resnet18(num_classes=num_classes)
+        # model = get_modified_resnet18(num_classes=num_classes)
+        model = self._resnet18_n_class(num_classes=num_classes)
         self.model = model
         
         self.num_classes = num_classes
@@ -37,7 +38,12 @@ class ResNet18Classifier(L.LightningModule):
         
         self.warmup_steps = warmup_steps
         self.train_steps = train_steps
-        
+    
+    def _resnet18_n_class(self, num_classes):
+        model = resnet18(zero_init_residual=True, weights=None)
+        model.fc = nn.Linear(512, num_classes, bias=True)
+        return model
+
     def forward(self, x):
         self.model(x)
         
@@ -48,7 +54,14 @@ class ResNet18Classifier(L.LightningModule):
         self.log_dict({
             "train_loss": loss,
         }, on_step=True, on_epoch=True)
-        return loss
+        
+        return {
+            "X": X,
+            "y": y,
+            "loss": loss,
+            "pred": pred,
+            "batch_idx": batch_idx
+        }
     
     def validation_step(self, batch, batch_idx):
         X, y = batch
@@ -60,11 +73,17 @@ class ResNet18Classifier(L.LightningModule):
             "val_acc": val_acc
         }, on_step=False, on_epoch=True)
         
-        return loss
+        return {
+            "X": X,
+            "y": y,
+            "loss": loss,
+            "pred": pred,
+            "batch_idx": batch_idx
+        }
     
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
-            self.parameters(), 
+            self.model.parameters(), 
             lr=self.lr, betas=[0.9, 0.999], 
             weight_decay=1e-2,
         )
