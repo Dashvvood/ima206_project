@@ -24,7 +24,12 @@ from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 import lightning as L
 
+from torch.utils.data import SubsetRandomSampler
 from utils.confusion_matrix import LogConfusionMatrix
+from utils.medmnist_subset import get_subset_indices
+import numpy as np
+import itertools
+
 
 train_transform = transforms.Compose([
     transforms.RandomResizedCrop(size=opts.img_size, scale=(0.8, 1.0), ratio=(0.75, 4/3)),
@@ -52,11 +57,16 @@ val_dataset = PathMNIST(
     root="../../data/medmnist2d/"
 )
 
+np.random.seed(42)
+subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
+subset_indices = list(itertools.chain(*subset_indices.values())) # inplace
+
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
-    shuffle=True, num_workers=opts.num_workers, 
+    num_workers=opts.num_workers, 
     drop_last=True,
     collate_fn=pathmnist_collate_fn,
+    sampler=SubsetRandomSampler(indices=subset_indices), # this line will shuffle the indice each epoch
 )
 
 val_loader = DataLoader(
@@ -105,7 +115,8 @@ trainer = L.Trainer(
     fast_dev_run=opts.fast,
     logger=wandblogger,
     accumulate_grad_batches=opts.accumulate_grad_batches,
-    log_every_n_steps=10,    callbacks=[checkpoint_callback, confusion_callback],
+    log_every_n_steps=10,
+    callbacks=[checkpoint_callback, confusion_callback],
 )
 
 trainer.fit(

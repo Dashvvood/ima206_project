@@ -67,6 +67,9 @@ parser.add_argument(
 parser.add_argument(
     "--ps", type=str, default="postscript"
 )
+parser.add_argument(
+    "-p", "--proportion", type=float, default=1.0
+)
 
 
 opts, missing = parser.parse_known_args()
