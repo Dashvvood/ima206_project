@@ -115,7 +115,7 @@ trainer = L.Trainer(
     fast_dev_run=opts.fast,
     logger=wandblogger,
     accumulate_grad_batches=opts.accumulate_grad_batches,
-    log_every_n_steps=10,
+    log_every_n_steps=opts.log_step,
     callbacks=[checkpoint_callback, confusion_callback],
 )
 

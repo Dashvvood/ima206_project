@@ -41,6 +41,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--log_step", type=int, default=10
+)
+
+parser.add_argument(
     "--img_root", type=str, default="."
 )
 
