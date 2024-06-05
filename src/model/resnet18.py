@@ -45,7 +45,7 @@ class ResNet18Classifier(L.LightningModule):
         return model
 
     def forward(self, x):
-        self.model(x)
+        return self.model(x)
         
     def training_step(self, batch, batch_idx):
         X, y = batch
