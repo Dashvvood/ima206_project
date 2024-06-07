@@ -2,70 +2,64 @@ import torchvision.transforms as transforms
 from constant import PathMNIST_MEAN, PathMNIST_STD
 import random
 from PIL import Image, ImageOps, ImageFilter
+import torch
+from deprecated import deprecated
+
+class Rotate90orMinus90(torch.nn.Module):
+    
+    def __init__(self, p) -> None:
+        self.p = p
+        
+    def __call__(self, x):
+        if random.random() <= self.p:
+            angle = random.choice([90, -90])
+            return transforms.functional.rotate(x, angle)
+        return x
+
+class StandardFinetuneTransform(object):
+    """
+    The same with the other models
+    """
+    
+    def __init__(
+        self, 
+        img_size=28,
+        flip_p = 0.5,
+        rotate_p = 0.5,
+        gaussian_p = 0.5,
+    ) -> None:
+        self.transform = transforms.Compose([
+            transforms.RandomResizedCrop(size=img_size, scale=(0.8, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0)),
+            transforms.RandomHorizontalFlip(p=flip_p),
+            Rotate90orMinus90(p=rotate_p),
+            transforms.RandomApply([transforms.GaussianBlur(kernel_size=7)], p=gaussian_p),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=PathMNIST_MEAN, std=PathMNIST_STD),
+        ])
+    
+    def __call__(self, x):
+        return self.transform(x)
+    
+
+class BarlowTwinPretainTransform(StandardFinetuneTransform):
+    def __init__(self, img_size=28, flip_p=0.5, rotate_p=0.5, gaussian_p=0.5) -> None:
+        super().__init__(img_size, flip_p, rotate_p, gaussian_p)
+    
+    def __call__(self, x):
+        return self.transform(x), self.transform(x)
+    
+        
 
 def pathmnist_normalization():
     return transforms.Normalize(mean=PathMNIST_MEAN, std=PathMNIST_STD)
 
-class GaussianBlur(object):
-    def __init__(self, p):
-        self.p = p
-
-    def __call__(self, img):
-        if random.random() < self.p:
-            sigma = random.random() * 1.9 + 0.1
-            return img.filter(ImageFilter.GaussianBlur(sigma))
-        else:
-            return img
 
 
-class Solarization(object):
-    def __init__(self, p):
-        self.p = p
 
-    def __call__(self, img):
-        if random.random() < self.p:
-            return ImageOps.solarize(img)
-        else:
-            return img
-        
-class Facebook_BarlowTwinsTransform:
-    def __init__(self):
-        self.transform = transforms.Compose([
-            transforms.RandomResizedCrop(224, interpolation=Image.BICUBIC),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomApply(
-                [transforms.ColorJitter(brightness=0.4, contrast=0.4,
-                                        saturation=0.2, hue=0.1)],
-                p=0.8
-            ),
-            transforms.RandomGrayscale(p=0.2),
-            GaussianBlur(p=1.0),
-            Solarization(p=0.0),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=PathMNIST_MEAN,
-                                 std=PathMNIST_STD)
-        ])
-        self.transform_prime = transforms.Compose([
-            transforms.RandomResizedCrop(224, interpolation=Image.BICUBIC),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomApply(
-                [transforms.ColorJitter(brightness=0.4, contrast=0.4,
-                                        saturation=0.2, hue=0.1)],
-                p=0.8
-            ),
-            transforms.RandomGrayscale(p=0.2),
-            GaussianBlur(p=0.1),
-            Solarization(p=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=PathMNIST_MEAN,
-                                 std=PathMNIST_STD)
-        ])
 
-    def __call__(self, x):
-        y1 = self.transform(x)
-        y2 = self.transform_prime(x)
-        return y1, y2
-    
+
+
+@deprecated("This class is deprecated, please use ")
 class BarlowTwinsTransform:
     def __init__(self, train=True, input_height=224, gaussian_blur=True, jitter_strength=1.0, normalize=None):
         self.input_height = input_height

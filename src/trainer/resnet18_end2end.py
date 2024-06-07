@@ -100,8 +100,6 @@ checkpoint_callback = ModelCheckpoint(
     monitor="val_acc", mode="max"
 )
 
-confusion_callback = LogConfusionMatrix()
-
 wandblogger = WandbLogger(
     name=f"{o_d}_{thisfile}_{opts.ps}", 
     save_dir=opts.log_dir, 
@@ -116,7 +114,7 @@ trainer = L.Trainer(
     logger=wandblogger,
     accumulate_grad_batches=opts.accumulate_grad_batches,
     log_every_n_steps=opts.log_step,
-    callbacks=[checkpoint_callback, confusion_callback],
+    callbacks=[checkpoint_callback, LogConfusionMatrix()],
 )
 
 trainer.fit(

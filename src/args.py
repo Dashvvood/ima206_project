@@ -61,6 +61,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--save_training_output", action="store_true", default=False,
+)
+
+parser.add_argument(
     "--accumulate_grad_batches", type=int, default=1
 )
 

@@ -5,19 +5,14 @@ from lightning.pytorch.callbacks import Callback
 from torch import Tensor
 from typing import Mapping
 import torch
-from collections import defaultdict
-from torchmetrics import ConfusionMatrix
-import wandb
-from sklearn.metrics import ConfusionMatrixDisplay
-from torchmetrics.classification import MulticlassConfusionMatrix
-import PIL
+
+from utils.common import figure2pil
 
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sn
 from matplotlib.collections import QuadMesh
-import matplotlib.colors as colors
 
 
 def get_new_fig(fn, figsize=[9, 9]):
@@ -284,13 +279,6 @@ def pp_matrix_from_data(
         pred_val_axis=pred_val_axis,
     )
     return fig
-
-def figure2pil(fig):
-    import io
-    buf = io.BytesIO()
-    fig.savefig(buf)
-    buf.seek(0)
-    return PIL.Image.open(buf)
     
 
 class LogConfusionMatrix(Callback):
@@ -303,8 +291,8 @@ class LogConfusionMatrix(Callback):
         self.memory["y"] = []
         
     def on_validation_batch_end(self, trainer: L.Trainer, pl_module: L.LightningModule, outputs: Tensor | Mapping[str, Any] | None, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
-        self.memory["prob"].append(outputs["pred"].cpu())
-        self.memory["y"].append(outputs["y"].cpu())
+        self.memory["prob"].append(outputs.out.cpu())
+        self.memory["y"].append(outputs.y.cpu())
         
     def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         pred_id = torch.cat(self.memory["prob"], dim=0).argmax(dim=1)
