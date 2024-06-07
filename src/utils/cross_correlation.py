@@ -21,10 +21,15 @@ import matplotlib.colors as colors
 
 from utils.common import figure2pil
 
-def pp_cc_matrix(X, figsize=[32, 32]):
+def pp_cc_matrix(X, figsize=[36, 32]):
     fig = plt.figure(figsize=figsize)
-    plt.imshow(X, cmap='Blues', interpolation='nearest')
+    ax = plt.axes()
+    im = ax.imshow(X, cmap='Blues', interpolation='nearest')
     plt.axis("off")
+    cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
+    cb = plt.colorbar(im, cax=cax) # Similar to fig.colorbar(im, cax = cax)
+    cb.ax.tick_params(labelsize=64) 
+    
     # for i in range(len(X)):
     #     for j in range(len(X[0])):
     #         plt.text(j, i, f"{X[i][j]:.1f}", ha='center', va='center', color='white')
@@ -51,7 +56,8 @@ class LogCrossCorrMatrix(Callback):
         z1_norm = (z1 - torch.mean(z1, dim=0)) / torch.std(z1, dim=0)
         z2_norm = (z2 - torch.mean(z2, dim=0)) / torch.std(z2, dim=0)
         cross_corr = torch.matmul(z1_norm.T, z2_norm) / z1.shape[0]
-        fig = pp_cc_matrix(cross_corr, figsize=(32, 32))
+        fig = pp_cc_matrix(cross_corr, figsize=(36, 32))
+        
         img = figure2pil(fig=fig)
-
+        plt.close()
         trainer.logger.log_image(key="val_epoch_ccm", images=[img], step=pl_module.current_epoch)

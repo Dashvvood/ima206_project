@@ -166,3 +166,8 @@ log/*
 ckpt/
 script/tmp.sh
 src/*.ipynb
+
+# symbolic link
+ckpt
+log
+data
