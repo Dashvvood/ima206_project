@@ -65,6 +65,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--frozen", action="store_true", default=False,
+)
+
+parser.add_argument(
     "--accumulate_grad_batches", type=int, default=1
 )
 
@@ -77,6 +81,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "-p", "--proportion", type=float, default=1.0
+)
+
+parser.add_argument(
+    "--rotate_p", type=float, default=0.5
 )
 
 

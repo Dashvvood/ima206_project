@@ -31,8 +31,8 @@ from model.barlow_twins import BarlowTwinsPretain
 # utils
 from utils.cross_correlation import LogCrossCorrMatrix
 
-train_transform = BarlowTwinPretainTransform(img_size=opts.img_size)
-val_transform = BarlowTwinPretainTransform(img_size=opts.img_size)
+train_transform = BarlowTwinPretainTransform(img_size=opts.img_size, rotate_p=opts.rotate_p)
+val_transform = BarlowTwinPretainTransform(img_size=opts.img_size, rotate_p=opts.rotate_p)
 
 
 train_dataset = PathMNIST(
@@ -47,7 +47,7 @@ val_dataset = PathMNIST(
     root="../../data/medmnist2d/"
 )
 
-np.random.seed(42)
+np.random.seed(42) # don't forget this
 subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
 subset_indices = list(itertools.chain(*subset_indices.values())) # inplace
 

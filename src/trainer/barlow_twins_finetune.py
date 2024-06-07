@@ -4,54 +4,45 @@ motti.append_parent_dir(__file__)
 thisfile = os.path.basename(__file__).split(".")[0]
 o_d = motti.o_d()
 
-from functools import partial
-from typing import Sequence, Tuple, Union
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-import torchvision.transforms as transforms
-import torchvision.transforms.functional as VisionF
-
+# lightning
 import lightning as L
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 from torch.utils.data import DataLoader
-from torchvision.models.resnet import resnet18
-from torchvision.utils import make_grid
-from torchmetrics.functional import accuracy
 from lightning.pytorch.loggers import WandbLogger
 
-import matplotlib.pyplot as plt
+import torch
 import numpy as np
+import itertools
 
 # self define
 from args import opts
 os.makedirs(opts.log_dir, exist_ok=True)
 os.makedirs(opts.ckpt_dir, exist_ok=True)
 
-from augmentation import BarlowTwinsTransform, pathmnist_normalization
-from dataset import PathMNIST
+from utils.confusion_matrix import LogConfusionMatrix
 
-from model.barlow_twins import (
-    BarlowTwins,
-    BarlowTwinsLoss,
-    get_modified_resnet18,
-    OnlineFineTuner,
-    BarlowTwinsForImageClassification
-)
+# dataset
+from medmnist import PathMNIST
+from dataset import pathmnist_collate_fn
+from augmentation import  FinetuneTransform
+from torch.utils.data import SubsetRandomSampler
+from utils.medmnist_subset import get_subset_indices
 
-train_transform = transforms.Compose([
-    transforms.RandomCrop(opts.img_size, padding=4, padding_mode="reflect"),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    pathmnist_normalization(),
-])
+# model
+from model.barlow_twins import BarlowTwinsPretain, BarlowTwinsForImageClassification
 
-val_transform = transforms.Compose([
-    transforms.ToTensor(),
-    pathmnist_normalization(),
-])
+# utils
+from utils.cross_correlation import LogCrossCorrMatrix
+
+from functools import partial
+from typing import Sequence, Tuple, Union
+
+
+
+train_transform = FinetuneTransform(img_size=opts.img_size)
+val_transform = FinetuneTransform(img_size=opts.img_size)
+
 
 train_dataset = PathMNIST(
     split="train", download=False, 
@@ -65,49 +56,35 @@ val_dataset = PathMNIST(
     root="../../data/medmnist2d/"
 )
 
+np.random.seed(42) # don't forget this
+subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
+subset_indices = list(itertools.chain(*subset_indices.values())) # inplace
+
+
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
-    shuffle=True, num_workers=opts.num_workers, 
-    drop_last=True,
-    collate_fn=PathMNIST.collate_fn,
+    num_workers=opts.num_workers, drop_last=True,
+    collate_fn=pathmnist_collate_fn,
+    sampler=SubsetRandomSampler(indices=subset_indices)
 )
 
 val_loader = DataLoader(
     val_dataset, batch_size=opts.batch_size, 
     shuffle=False, num_workers=opts.num_workers, 
     drop_last=False,
-    collate_fn=PathMNIST.collate_fn,
-
+    collate_fn=pathmnist_collate_fn,
 )
 
-encoder = get_modified_resnet18()
-encoder_out_dim = 512
-z_dim = 128
-
 if opts.ckpt != "" and os.path.exists(opts.ckpt):
-    barlow_model = BarlowTwins.load_from_checkpoint(
-        opts.ckpt,
-        encoder=encoder,
-        encoder_out_dim=encoder_out_dim,
-        num_training_samples=len(train_dataset),
-        batch_size=opts.batch_size,
-        z_dim=z_dim,
-    )
+    barlow_model = BarlowTwinsPretain.load_from_checkpoint(opts.ckpt)
 else:
-    barlow_model = BarlowTwins(
-        encoder=encoder,
-        encoder_out_dim=encoder_out_dim,
-        num_training_samples=len(train_dataset),
-        batch_size=opts.batch_size,
-        z_dim=z_dim,
-    )
+    raise FileNotFoundError("Checkpoint not found !")
 
 model = BarlowTwinsForImageClassification(
-    backbone=barlow_model,
-    embedding_dim=encoder_out_dim,
-    num_classes=train_dataset.n_classes,
-    criterion=nn.CrossEntropyLoss(),
-    finetune=True,
+    pretrained_model=barlow_model,
+    num_classes=len(train_dataset.info["label"]),
+    criterion=torch.nn.CrossEntropyLoss(),
+    frozen=opts.frozen,
     warmup_steps=opts.warmup_epochs * len(train_loader),
     train_steps=opts.max_epochs * len(train_loader),
 )
@@ -132,7 +109,7 @@ trainer = L.Trainer(
     logger=wandblogger,
     accumulate_grad_batches=opts.accumulate_grad_batches,
     log_every_n_steps=10,
-    callbacks=[checkpoint_callback],
+    callbacks=[checkpoint_callback, LogConfusionMatrix()],
 )
 
 trainer.fit(

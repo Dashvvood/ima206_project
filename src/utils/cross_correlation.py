@@ -5,30 +5,18 @@ from lightning.pytorch.callbacks import Callback
 from torch import Tensor
 from typing import Mapping
 import torch
-from collections import defaultdict
-from torchmetrics import ConfusionMatrix
-import wandb
-from sklearn.metrics import ConfusionMatrixDisplay
-from torchmetrics.classification import MulticlassConfusionMatrix
-import PIL
-
-import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sn
-from matplotlib.collections import QuadMesh
-import matplotlib.colors as colors
 
 from utils.common import figure2pil
 
-def pp_cc_matrix(X, figsize=[36, 32]):
+def pp_cc_matrix(X, figsize=[36, 32], cb_size=48):
     fig = plt.figure(figsize=figsize)
     ax = plt.axes()
     im = ax.imshow(X, cmap='Blues', interpolation='nearest')
     plt.axis("off")
     cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
     cb = plt.colorbar(im, cax=cax) # Similar to fig.colorbar(im, cax = cax)
-    cb.ax.tick_params(labelsize=64) 
+    cb.ax.tick_params(labelsize=cb_size) 
     
     # for i in range(len(X)):
     #     for j in range(len(X[0])):
@@ -56,7 +44,7 @@ class LogCrossCorrMatrix(Callback):
         z1_norm = (z1 - torch.mean(z1, dim=0)) / torch.std(z1, dim=0)
         z2_norm = (z2 - torch.mean(z2, dim=0)) / torch.std(z2, dim=0)
         cross_corr = torch.matmul(z1_norm.T, z2_norm) / z1.shape[0]
-        fig = pp_cc_matrix(cross_corr, figsize=(36, 32))
+        fig = pp_cc_matrix(cross_corr, figsize=(10,8), cb_size=10)
         
         img = figure2pil(fig=fig)
         plt.close()

@@ -180,7 +180,7 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         self.num_classes = num_classes
         
         self.classifier = nn.Linear(
-            in_features=pretrained_model.projector.input_dim, # this <=> output_dim of resnet18 
+            in_features=pretrained_model.projector.input_dim[0], # this <=> output_dim of resnet18 
             out_features=num_classes
         )
         

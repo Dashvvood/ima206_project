@@ -48,14 +48,30 @@ class BarlowTwinPretainTransform(StandardFinetuneTransform):
     def __call__(self, x):
         return self.transform(x), self.transform(x)
     
-        
+
+class FinetuneTransform(object):
+    def __init__(
+        self, 
+        img_size=28,
+        flip_p = 0.5,
+        rotate_p = 0.5,
+        gaussian_p = 0.5,
+    ) -> None:
+        self.transform = transforms.Compose([
+            transforms.RandomResizedCrop(size=img_size, scale=(0.8, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0)),
+            transforms.RandomHorizontalFlip(p=flip_p),
+            # Rotate90orMinus90(p=rotate_p),
+            # transforms.RandomApply([transforms.GaussianBlur(kernel_size=7)], p=gaussian_p),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=PathMNIST_MEAN, std=PathMNIST_STD),
+        ])
+    
+    def __call__(self, x):
+        return self.transform(x)
+
 
 def pathmnist_normalization():
     return transforms.Normalize(mean=PathMNIST_MEAN, std=PathMNIST_STD)
-
-
-
-
 
 
 
