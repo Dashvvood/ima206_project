@@ -54,4 +54,4 @@ class LogCrossCorrMatrix(Callback):
         fig = pp_cc_matrix(cross_corr, figsize=(32, 32))
         img = figure2pil(fig=fig)
 
-        trainer.logger.log_image(key="val_epoch_cm", images=[img], step=pl_module.current_epoch)
+        trainer.logger.log_image(key="val_epoch_ccm", images=[img], step=pl_module.current_epoch)
