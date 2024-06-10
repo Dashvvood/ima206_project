@@ -69,7 +69,7 @@ val_loader = DataLoader(
 
 z_dim = 1024
 
-if opts.ckpt != "" and os.path.exists(opts.ckpt):
+if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
     barlow_model = BarlowTwinsPretain.load_from_checkpoint(
         opts.ckpt,
         lr = opts.lr,

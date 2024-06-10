@@ -44,13 +44,15 @@ val_transform = FinetuneTransform(img_size=opts.img_size)
 train_dataset = PathMNIST(
     split="train", download=False, 
     transform=train_transform,
-    root="../../data/medmnist2d/"
+    root="../../data/medmnist2d/",
+    size=64
 )
 
 val_dataset = PathMNIST(
     split="val", download=False, 
     transform=val_transform,
-    root="../../data/medmnist2d/"
+    root="../../data/medmnist2d/",
+    size=64
 )
 
 np.random.seed(42) # don't forget this
@@ -72,7 +74,7 @@ val_loader = DataLoader(
     collate_fn=pathmnist_collate_fn,
 )
 
-if opts.ckpt != "" and os.path.exists(opts.ckpt):
+if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
     barlow_model = BarlowTwinsPretain.load_from_checkpoint(opts.ckpt)
 else:
     raise FileNotFoundError("Checkpoint not found !")

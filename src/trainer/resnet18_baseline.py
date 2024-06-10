@@ -81,7 +81,7 @@ val_loader = DataLoader(
     collate_fn=pathmnist_collate_fn
 )
 
-if opts.ckpt != "" and os.path.exists(opts.ckpt):
+if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
     model = ResNet18Classifier.load_from_checkpoint(
         checkpoint_path=opts.ckpt,
         lr=opts.lr, 
