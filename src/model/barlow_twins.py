@@ -63,7 +63,7 @@ def get_modified_resnet18():
 
 
 class ProjectionHead(nn.Module):
-    def __init__(self, input_dim=2048, hidden_dim=2048, output_dim=128):
+    def __init__(self, input_dim=2048, hidden_dim=2048, output_dim=2048):
         super().__init__()
         self.input_dim = input_dim,
         self.hidden_dim = hidden_dim,
@@ -95,7 +95,7 @@ class BarlowTwinsPretain(L.LightningModule):
         self.backbone = self._resnet18_backbone()
         self.backbone_out_dim = 512
         
-        self.projector = ProjectionHead(input_dim=self.backbone_out_dim , hidden_dim=self.backbone_out_dim , output_dim=z_dim)
+        self.projector = ProjectionHead(input_dim=self.backbone_out_dim , hidden_dim=z_dim , output_dim=z_dim)
         self.critetion = BarlowTwinsLoss(lambda_coeff=lambda_coeff, z_dim=z_dim)
         self.lr = lr
         # self.warmup_epochs = warmup_epochs

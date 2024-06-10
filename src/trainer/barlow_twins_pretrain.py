@@ -38,19 +38,20 @@ val_transform = BarlowTwinPretainTransform(img_size=opts.img_size, rotate_p=opts
 train_dataset = PathMNIST(
     split="train", download=False, 
     transform=train_transform,
-    root="../../data/medmnist2d/"
+    root="../../data/medmnist2d/",
+    size=64,
 )
 
 val_dataset = PathMNIST(
     split="val", download=False, 
     transform=val_transform,
-    root="../../data/medmnist2d/"
+    root="../../data/medmnist2d/",
+    size=64,
 )
 
 np.random.seed(42) # don't forget this
 subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
 subset_indices = list(itertools.chain(*subset_indices.values())) # inplace
-
 
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
@@ -66,8 +67,7 @@ val_loader = DataLoader(
     collate_fn=pathmnist_collate_fn,
 )
 
-
-z_dim = 128
+z_dim = 1024
 
 if opts.ckpt != "" and os.path.exists(opts.ckpt):
     barlow_model = BarlowTwinsPretain.load_from_checkpoint(

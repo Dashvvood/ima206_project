@@ -48,22 +48,19 @@ val_transform = v2.Compose([
 ])
 
 
-
 train_dataset = PathMNIST(
     split="train", download=False, 
     transform=train_transform,
     root="../../data/medmnist2d/",
-    size=224,
+    size=64,
 )
 
 val_dataset = PathMNIST(
     split="val", download=False, 
     transform=val_transform,
     root="../../data/medmnist2d/",
-    size=224,
+    size=64,
 )
-
-
 
 np.random.seed(42)
 subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
@@ -84,31 +81,23 @@ val_loader = DataLoader(
     collate_fn=pathmnist_collate_fn
 )
 
-# if opts.ckpt != "" and os.path.exists(opts.ckpt):
-#     model = ResNet18Classifier.load_from_checkpoint(
-#         checkpoint_path=opts.ckpt,
-#         lr=opts.lr, 
-#         num_classes=len(train_dataset.info["label"]), 
-#         warmup_steps=opts.warmup_epochs * len(train_loader), 
-#         train_steps=opts.max_epochs * len(train_loader),
-#         criterion= nn.CrossEntropyLoss()
-#     )
-# else:
-#     model = ResNet18Classifier(
-#         lr=opts.lr, 
-#         num_classes=len(train_dataset.info["label"]), 
-#         warmup_steps=opts.warmup_epochs * len(train_loader), 
-#         train_steps=opts.max_epochs * len(train_loader),
-#         criterion= nn.CrossEntropyLoss()
-#     )
-
-model = ResNet18Classifier(
-    lr=opts.lr, 
-    num_classes=len(train_dataset.info["label"]), 
-    warmup_steps=opts.warmup_epochs * len(train_loader), 
-    train_steps=opts.max_epochs * len(train_loader),
-    criterion= nn.CrossEntropyLoss()
-)
+if opts.ckpt != "" and os.path.exists(opts.ckpt):
+    model = ResNet18Classifier.load_from_checkpoint(
+        checkpoint_path=opts.ckpt,
+        lr=opts.lr, 
+        num_classes=len(train_dataset.info["label"]), 
+        warmup_steps=opts.warmup_epochs * len(train_loader), 
+        train_steps=opts.max_epochs * len(train_loader),
+        criterion= nn.CrossEntropyLoss()
+    )
+else:
+    model = ResNet18Classifier(
+        lr=opts.lr, 
+        num_classes=len(train_dataset.info["label"]), 
+        warmup_steps=opts.warmup_epochs * len(train_loader), 
+        train_steps=opts.max_epochs * len(train_loader),
+        criterion= nn.CrossEntropyLoss()
+    )
 
 checkpoint_callback = ModelCheckpoint(
     save_top_k=1, save_last=True,
@@ -137,11 +126,10 @@ trainer.fit(
     model=model,
     train_dataloaders=train_loader,
     val_dataloaders=val_loader,
-    ckpt_path=opts.ckpt,
+    # ckpt_path=opts.ckpt,
 )
 
 ## test
-
 test_transform = v2.Compose([
     v2.Resize(size=opts.img_size),
     v2.ToImage(), v2.ToDtype(torch.float32, scale=True), # <=> ToTensor()
@@ -152,7 +140,7 @@ test_dataset = PathMNIST(
     split="test", download=False, 
     transform=test_transform,
     root="../../data/medmnist2d/",
-    size=224,
+    size=64,
 )
 
 test_loader = DataLoader(
