@@ -38,11 +38,8 @@ from utils.cross_correlation import LogCrossCorrMatrix
 from functools import partial
 from typing import Sequence, Tuple, Union
 
-
-
 train_transform = FinetuneTransform(img_size=opts.img_size)
 val_transform = FinetuneTransform(img_size=opts.img_size)
-
 
 train_dataset = PathMNIST(
     split="train", download=False, 

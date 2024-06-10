@@ -171,3 +171,5 @@ src/*.ipynb
 ckpt
 log
 data
+src/notebook/
+doc/

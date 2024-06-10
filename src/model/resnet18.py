@@ -95,8 +95,9 @@ class ResNet18Classifier(L.LightningModule):
         test_acc = self.acc(out, y)
         
         self.log_dict({
-            "test_loss": loss, "test_acc": test_acc
-        }, on_epoch=True) 
+            "test_loss": loss, 
+            "test_acc": test_acc,
+        }, on_epoch=True)
         
         return ResNet18ClassifierOutput(X=X, y=y, out=out, loss=loss)
     

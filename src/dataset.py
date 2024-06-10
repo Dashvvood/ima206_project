@@ -1,11 +1,9 @@
 import torch
 import torch.utils
-import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 
-from medmnist import INFO, Evaluator
+from medmnist import INFO
 from medmnist import PathMNIST as BasePathMNIST
-import motti
 from constant import MEDMNIST_ROOT
 
 def pathmnist_collate_fn(batch):
@@ -80,5 +78,3 @@ class TransformDataset(Dataset):
         else:
             z = self.transforms(z)
         return z
-
-    

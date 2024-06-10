@@ -17,7 +17,9 @@ from dataset import pathmnist_collate_fn
 # data meta
 from constant import PathMNISTmeta
 import torchvision.transforms as transforms
+from torchvision.transforms import v2
 
+import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
@@ -31,31 +33,37 @@ import numpy as np
 import itertools
 
 
-train_transform = transforms.Compose([
-    transforms.RandomResizedCrop(size=opts.img_size, scale=(0.8, 1.0), ratio=(0.75, 4/3)),
-    # transforms.RandomCrop(opts.img_size, padding=4, padding_mode="reflect"),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
+train_transform = v2.Compose([
+    v2.RandomResizedCrop(size=opts.img_size, scale=(0.8, 1.0), ratio=(0.75, 4/3)),
+    v2.RandomHorizontalFlip(p=0.5),
+    v2.RandomVerticalFlip(p=0.5),
+    v2.ToImage(), v2.ToDtype(torch.float32, scale=True), # <=> ToTensor()
+    v2.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
 ])
 
-val_transform = transforms.Compose([
-    transforms.Resize(size=opts.img_size),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
+val_transform = v2.Compose([
+    v2.Resize(size=opts.img_size),
+    v2.ToImage(), v2.ToDtype(torch.float32, scale=True), # <=> ToTensor()
+    v2.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
 ])
+
+
 
 train_dataset = PathMNIST(
     split="train", download=False, 
     transform=train_transform,
-    root="../../data/medmnist2d/"
+    root="../../data/medmnist2d/",
+    size=224,
 )
 
 val_dataset = PathMNIST(
     split="val", download=False, 
     transform=val_transform,
-    root="../../data/medmnist2d/"
+    root="../../data/medmnist2d/",
+    size=224,
 )
+
+
 
 np.random.seed(42)
 subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
@@ -76,28 +84,36 @@ val_loader = DataLoader(
     collate_fn=pathmnist_collate_fn
 )
 
-if opts.ckpt != "" and os.path.exists(opts.ckpt):
-    model = ResNet18Classifier.load_from_checkpoint(
-        checkpoint_path=opts.ckpt,
-        lr=opts.lr, 
-        num_classes=len(train_dataset.info["label"]), 
-        warmup_steps=opts.warmup_epochs * len(train_loader), 
-        train_steps=opts.max_epochs * len(train_loader),
-        criterion= nn.CrossEntropyLoss()
-    )
-else:
-    model = ResNet18Classifier(
-        lr=opts.lr, 
-        num_classes=len(train_dataset.info["label"]), 
-        warmup_steps=opts.warmup_epochs * len(train_loader), 
-        train_steps=opts.max_epochs * len(train_loader),
-        criterion= nn.CrossEntropyLoss()
-    )
+# if opts.ckpt != "" and os.path.exists(opts.ckpt):
+#     model = ResNet18Classifier.load_from_checkpoint(
+#         checkpoint_path=opts.ckpt,
+#         lr=opts.lr, 
+#         num_classes=len(train_dataset.info["label"]), 
+#         warmup_steps=opts.warmup_epochs * len(train_loader), 
+#         train_steps=opts.max_epochs * len(train_loader),
+#         criterion= nn.CrossEntropyLoss()
+#     )
+# else:
+#     model = ResNet18Classifier(
+#         lr=opts.lr, 
+#         num_classes=len(train_dataset.info["label"]), 
+#         warmup_steps=opts.warmup_epochs * len(train_loader), 
+#         train_steps=opts.max_epochs * len(train_loader),
+#         criterion= nn.CrossEntropyLoss()
+#     )
+
+model = ResNet18Classifier(
+    lr=opts.lr, 
+    num_classes=len(train_dataset.info["label"]), 
+    warmup_steps=opts.warmup_epochs * len(train_loader), 
+    train_steps=opts.max_epochs * len(train_loader),
+    criterion= nn.CrossEntropyLoss()
+)
 
 checkpoint_callback = ModelCheckpoint(
     save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
-    monitor="val_acc", mode="max"
+    monitor="val_loss", mode="min"
 )
 
 wandblogger = WandbLogger(
@@ -121,4 +137,33 @@ trainer.fit(
     model=model,
     train_dataloaders=train_loader,
     val_dataloaders=val_loader,
+    ckpt_path=opts.ckpt,
+)
+
+## test
+
+test_transform = v2.Compose([
+    v2.Resize(size=opts.img_size),
+    v2.ToImage(), v2.ToDtype(torch.float32, scale=True), # <=> ToTensor()
+    v2.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
+])
+
+test_dataset = PathMNIST(
+    split="test", download=False, 
+    transform=test_transform,
+    root="../../data/medmnist2d/",
+    size=224,
+)
+
+test_loader = DataLoader(
+    test_dataset, batch_size=opts.batch_size, 
+    shuffle=False, num_workers=opts.num_workers, 
+    drop_last=False,
+    collate_fn=pathmnist_collate_fn
+)
+
+trainer.test(
+    model=model,
+    dataloaders=test_loader,
+    ckpt_path="best",
 )
