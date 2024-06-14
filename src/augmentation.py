@@ -47,8 +47,8 @@ class StandardFinetuneTransform(object):
     
 
 class BarlowTwinPretainTransform(StandardFinetuneTransform):
-    def __init__(self, img_size=28, flip_p=0.5, rotate_p=0.5, gaussian_p=0.5) -> None:
-        super().__init__(img_size, flip_p, rotate_p, gaussian_p)
+    def __init__(self, img_size=28, flip_p=0.5, jitter_p=0.8, gaussian_p=0.5) -> None:
+        super().__init__(img_size, flip_p, jitter_p, gaussian_p)
     
     def __call__(self, x):
         return self.transform(x), self.transform(x)
