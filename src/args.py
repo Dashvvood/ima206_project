@@ -14,6 +14,9 @@ parser.add_argument(
     "--max_epochs", type=int, default=1,
 )
 parser.add_argument(
+    "--from_epoch", type=int, default=0
+)
+parser.add_argument(
     "--num_workers", type=int, default=16
 )
 parser.add_argument(
@@ -66,7 +69,7 @@ parser.add_argument(
     "-p", "--proportion", type=float, default=1.0
 )
 parser.add_argument(
-    "--rotate_p", type=float, default=0.5
+    "--jitter_p", type=float, default=0.5
 )
 
 opts, missing = parser.parse_known_args()

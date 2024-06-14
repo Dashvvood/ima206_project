@@ -25,14 +25,19 @@ class StandardFinetuneTransform(object):
         self, 
         img_size=28,
         flip_p = 0.5,
-        rotate_p = 0.5,
+        jitter_p = 0.8,
         gaussian_p = 0.5,
     ) -> None:
         self.transform = transforms.Compose([
             transforms.RandomResizedCrop(size=img_size, scale=(0.8, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0)),
+            transforms.RandomApply(
+                [transforms.ColorJitter(brightness=0.4, contrast=0.4,saturation=0.2, hue=0.1)],
+                p=jitter_p
+            ),
             transforms.RandomHorizontalFlip(p=flip_p),
-            Rotate90orMinus90(p=rotate_p),
+            transforms.RandomVerticalFlip(p=flip_p),
             transforms.RandomApply([transforms.GaussianBlur(kernel_size=7)], p=gaussian_p),
+            
             transforms.ToTensor(),
             transforms.Normalize(mean=PathMNIST_MEAN, std=PathMNIST_STD),
         ])
@@ -54,14 +59,11 @@ class FinetuneTransform(object):
         self, 
         img_size=28,
         flip_p = 0.5,
-        rotate_p = 0.5,
-        gaussian_p = 0.5,
     ) -> None:
         self.transform = transforms.Compose([
             transforms.RandomResizedCrop(size=img_size, scale=(0.8, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0)),
             transforms.RandomHorizontalFlip(p=flip_p),
-            # Rotate90orMinus90(p=rotate_p),
-            # transforms.RandomApply([transforms.GaussianBlur(kernel_size=7)], p=gaussian_p),
+            transforms.RandomVerticalFlip(p=flip_p),
             transforms.ToTensor(),
             transforms.Normalize(mean=PathMNIST_MEAN, std=PathMNIST_STD),
         ])
