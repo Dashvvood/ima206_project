@@ -31,8 +31,8 @@ from model.barlow_twins import BarlowTwinsPretain
 # utils
 from utils.cross_correlation import LogCrossCorrMatrix
 
-train_transform = BarlowTwinPretainTransform(img_size=opts.img_size, rotate_p=opts.rotate_p)
-val_transform = BarlowTwinPretainTransform(img_size=opts.img_size, rotate_p=opts.rotate_p)
+train_transform = BarlowTwinPretainTransform(img_size=opts.img_size, jitter_p=opts.jitter_p)
+val_transform = BarlowTwinPretainTransform(img_size=opts.img_size, jitter_p=opts.jitter_p)
 
 
 train_dataset = PathMNIST(
