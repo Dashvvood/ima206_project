@@ -72,6 +72,11 @@ class ProjectionHead(nn.Module):
             nn.Linear(input_dim, hidden_dim, bias=False),  # original is False
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(inplace=True),
+            
+            nn.Linear(hidden_dim, hidden_dim, bias=False),  # original is False
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(inplace=True),
+            
             nn.Linear(hidden_dim, output_dim, bias=False),
         )
 
@@ -202,6 +207,9 @@ class BarlowTwinsForImageClassification(L.LightningModule):
     def forward(self, inputs):
         x = self.pretrained_model(inputs)
         return self.classifier(x)
+    
+    def _feature_extractor(self, inputs):
+        return self.pretrained_model(inputs)
     
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
