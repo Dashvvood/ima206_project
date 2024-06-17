@@ -77,6 +77,7 @@ val_loader = DataLoader(
 if opts.reuse and opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
     model = BarlowTwinsForImageClassification.load_from_checkpoint(
         checkpoint_path=opts.ckpt,
+        lr=opts.lr,
         num_classes=len(train_dataset.info["label"]),
         criterion=torch.nn.CrossEntropyLoss(),
         frozen=opts.frozen,
@@ -87,6 +88,7 @@ elif opts.reuse is False and opts.ckpt is not None and opts.ckpt != "" and os.pa
     barlow_model = BarlowTwinsPretain.load_from_checkpoint(opts.ckpt)
     model = BarlowTwinsForImageClassification(
         pretrained_model=barlow_model,
+        lr=opts.lr,
         num_classes=len(train_dataset.info["label"]),
         criterion=torch.nn.CrossEntropyLoss(),
         frozen=opts.frozen,
@@ -100,7 +102,7 @@ else:
 checkpoint_callback = ModelCheckpoint(
     save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
-    monitor="val_acc", mode="max"
+    monitor="val_loss", mode="min"
 )
 
 wandblogger = WandbLogger(

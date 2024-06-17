@@ -117,7 +117,8 @@ trainer = L.Trainer(
     logger=wandblogger,
     accumulate_grad_batches=opts.accumulate_grad_batches,
     log_every_n_steps=opts.log_step,
-    callbacks=[checkpoint_callback, LogConfusionMatrix()],
+    # callbacks=[checkpoint_callback, LogConfusionMatrix()],
+    callbacks=[checkpoint_callback],
 )
 
 trainer.fit(
