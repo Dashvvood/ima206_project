@@ -76,6 +76,7 @@ val_loader = DataLoader(
 
 if opts.reuse and opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
     model = BarlowTwinsForImageClassification.load_from_checkpoint(
+        checkpoint_path=opts.ckpt,
         num_classes=len(train_dataset.info["label"]),
         criterion=torch.nn.CrossEntropyLoss(),
         frozen=opts.frozen,
