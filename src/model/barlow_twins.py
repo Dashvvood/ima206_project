@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 from torchvision.models.resnet import resnet18
 import lightning as L
-from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 from transformers import get_cosine_schedule_with_warmup
 import torch.nn.functional as F
 from torchmetrics import Accuracy

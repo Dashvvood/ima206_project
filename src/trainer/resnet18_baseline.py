@@ -17,7 +17,6 @@ from dataset import pathmnist_collate_fn
 # data meta
 from constant import PathMNISTmeta
 import torchvision.transforms as transforms
-from torchvision.transforms import v2
 
 import torch
 import torch.nn as nn
@@ -33,20 +32,19 @@ import numpy as np
 import itertools
 
 
-train_transform = v2.Compose([
-    v2.RandomResizedCrop(size=opts.img_size, scale=(0.8, 1.0), ratio=(0.75, 4/3)),
-    v2.RandomHorizontalFlip(p=0.5),
-    v2.RandomVerticalFlip(p=0.5),
-    v2.ToImage(), v2.ToDtype(torch.float32, scale=True), # <=> ToTensor()
-    v2.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
+train_transform = transforms.Compose([
+    transforms.RandomResizedCrop(size=opts.img_size, scale=(0.8, 1.0), ratio=(0.75, 4/3)),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.RandomVerticalFlip(p=0.5),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
 ])
 
-val_transform = v2.Compose([
-    v2.Resize(size=opts.img_size),
-    v2.ToImage(), v2.ToDtype(torch.float32, scale=True), # <=> ToTensor()
-    v2.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
+val_transform = transforms.Compose([
+    transforms.Resize(size=opts.img_size),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
 ])
-
 
 train_dataset = PathMNIST(
     split="train", download=False, 
@@ -130,10 +128,10 @@ trainer.fit(
 )
 
 ## test
-test_transform = v2.Compose([
-    v2.Resize(size=opts.img_size),
-    v2.ToImage(), v2.ToDtype(torch.float32, scale=True), # <=> ToTensor()
-    v2.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
+test_transform = transforms.Compose([
+    transforms.Resize(size=opts.img_size),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=PathMNISTmeta.MEAN, std=PathMNISTmeta.STD)
 ])
 
 test_dataset = PathMNIST(
