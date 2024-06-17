@@ -14,7 +14,6 @@ from transformers import (
 from constant import PathMNIST_MEAN, PathMNIST_STD
 from utils.cos_warmup_scheduler import get_cosine_schedule_with_warmup
 
-
 ## "facebook/vit-mae-base"
 class LitViTMAEForPreTraining(L.LightningModule):
     def __init__(
@@ -26,14 +25,6 @@ class LitViTMAEForPreTraining(L.LightningModule):
         super().__init__()
         
         self.save_hyperparameters()
-        self.processor = X = ViTImageProcessor(
-            do_normalize=True,
-            do_rescale=True,
-            do_resize=True,
-            image_mean=PathMNIST_MEAN,
-            image_std=PathMNIST_STD,
-            size=64,
-        )
         self.config = ViTMAEConfig(image_size=64)
         self.model = ViTMAEForPreTraining(config=self.config)
         self.lr = lr
@@ -41,24 +32,23 @@ class LitViTMAEForPreTraining(L.LightningModule):
         self.warmup_steps = warmup_steps
         self.train_steps = train_steps
         
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, X):
+        return self.model(pixel_values=X)
     
-    
+
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        x = self.processor(x, return_tensors="pt").pixel_values
-        out = self(x)
+        X, y = batch
+        out = self(X)
         loss = out.loss
         
         self.log("train_loss", loss, on_step=True, on_epoch=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
-        x, y = batch
-        x = self.processor(x, return_tensors="pt").pixel_values
-        out = self(x)
+        X, y = batch
+        out = self(X)
         loss = out.loss
+
         self.log("val_loss", out.loss, on_step=False, on_epoch=True)
         return loss
     

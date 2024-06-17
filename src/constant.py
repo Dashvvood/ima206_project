@@ -1,5 +1,7 @@
 import argparse
 
+TINY_VAL = [1, 2, 12, 6, 5, 0, 8, 3, 7]  # index of first sample for each class in val set
+
 MEDMNIST_ROOT = "../data/medmnist2d/"
 PathMNIST_MEAN = [0.73765225, 0.53090023, 0.70307171]
 PathMNIST_STD = [0.12319908, 0.17607205, 0.12394462]

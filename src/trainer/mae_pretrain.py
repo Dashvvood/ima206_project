@@ -36,7 +36,6 @@ from model.mae import LitViTMAEForPreTraining
 from utils.cross_correlation import LogCrossCorrMatrix
 
 
-
 train_dataset = PathMNIST(
     split="train", download=False, 
     transform=None,
@@ -65,7 +64,7 @@ def _pathmnist_collate_fn(batch):
     X = [x[0] for x in batch]
     y = [x[1] for x in batch]
     y = torch.utils.data.default_collate(y)
-    X = processor(X, return_tensors="pt")
+    X = processor(X, return_tensors="pt").pixel_values
     return X, y.squeeze(-1)
 
 np.random.seed(42) # don't forget this
