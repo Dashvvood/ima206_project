@@ -52,7 +52,7 @@ class ResNet18Classifier(L.LightningModule):
         self.save_training_output = save_training_output
         self.training_step_output: ResNet18ClassifierOutput = None
         
-        self.current_epoch = from_epoch
+        self.from_epoch = from_epoch
         
     @staticmethod
     def _resnet18_n_class(num_classes):
@@ -70,6 +70,7 @@ class ResNet18Classifier(L.LightningModule):
         
         self.log_dict({
             "train_loss": loss,
+            "custom_epoch": self.current_epoch + self.from_epoch,
         }, on_step=True, on_epoch=True)
         
         if self.save_training_output:
@@ -85,7 +86,8 @@ class ResNet18Classifier(L.LightningModule):
         
         self.log_dict({
             "val_loss": loss,
-            "val_acc": val_acc
+            "val_acc": val_acc,
+            "custom_epoch": self.current_epoch + self.from_epoch
         }, on_step=False, on_epoch=True)
         
         return ResNet18ClassifierOutput(X=X, y=y, loss=loss, out=out)

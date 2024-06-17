@@ -49,4 +49,3 @@ CKPT_DICT = {
     "pretrain_001": "",
     
 }
-CUDA_VISIBLE_DEVICES=1 python resnet18_baseline.py --project baseline --batch_size 2048  --lr 5e-4 --log_step 1 --max_epochs 1000 --warmup_epochs 50 --num_workers 16 --ckpt_dir ../../ckpt/ --log_dir ../../log/ --img_size 64 -p 0.1 --ps baseline_0.1
