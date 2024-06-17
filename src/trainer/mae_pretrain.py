@@ -12,6 +12,10 @@ from lightning.pytorch.loggers import WandbLogger
 
 import numpy as np
 import itertools
+import torch
+
+from transformers import ViTImageProcessor
+from constant import PathMNIST_MEAN, PathMNIST_STD
 
 # self define
 from args import opts
@@ -31,23 +35,38 @@ from model.mae import LitViTMAEForPreTraining
 # utils
 from utils.cross_correlation import LogCrossCorrMatrix
 
-train_transform = BarlowTwinPretainTransform(img_size=opts.img_size, jitter_p=opts.jitter_p)
-val_transform = BarlowTwinPretainTransform(img_size=opts.img_size, jitter_p=opts.jitter_p)
 
 
 train_dataset = PathMNIST(
     split="train", download=False, 
-    transform=train_transform,
+    transform=None,
     root="../../data/medmnist2d/",
     size=64,
 )
 
 val_dataset = PathMNIST(
     split="val", download=False, 
-    transform=val_transform,
+    transform=None,
     root="../../data/medmnist2d/",
     size=64,
 )
+
+
+processor = ViTImageProcessor(
+    do_normalize=True,
+    do_rescale=True,
+    do_resize=True,
+    image_mean=PathMNIST_MEAN,
+    image_std=PathMNIST_STD,
+    size=64,
+)
+
+def _pathmnist_collate_fn(batch):
+    X = [x[0] for x in batch]
+    y = [x[1] for x in batch]
+    y = torch.utils.data.default_collate(y)
+    X = processor(X, return_tensors="pt")
+    return X, y.squeeze(-1)
 
 np.random.seed(42) # don't forget this
 subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
@@ -56,7 +75,7 @@ subset_indices = list(itertools.chain(*subset_indices.values())) # inplace
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
     num_workers=opts.num_workers, drop_last=True,
-    collate_fn=pathmnist_collate_fn,
+    collate_fn=_pathmnist_collate_fn,
     sampler=SubsetRandomSampler(indices=subset_indices)
 )
 
@@ -64,7 +83,7 @@ val_loader = DataLoader(
     val_dataset, batch_size=opts.batch_size, 
     shuffle=False, num_workers=opts.num_workers, 
     drop_last=False,
-    collate_fn=pathmnist_collate_fn,
+    collate_fn=_pathmnist_collate_fn,
 )
 
 # z_dim = 1024
@@ -112,7 +131,7 @@ trainer = L.Trainer(
     logger=wandblogger,
     accumulate_grad_batches=opts.accumulate_grad_batches,
     log_every_n_steps=opts.log_step,
-    callbacks=[checkpoint_callback, LogCrossCorrMatrix()],
+    callbacks=[checkpoint_callback],
 )
 
 trainer.fit(
