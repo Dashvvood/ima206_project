@@ -282,7 +282,7 @@ def pp_matrix_from_data(
     
 
 class LogConfusionMatrix(Callback):
-    def __init__(self) -> None:
+    def __init__(self, log_interval=10) -> None:
         super().__init__()
         self.memory = {}
     
@@ -297,7 +297,7 @@ class LogConfusionMatrix(Callback):
     def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         pred_id = torch.cat(self.memory["prob"], dim=0).argmax(dim=1)
         y_id = torch.cat(self.memory["y"], dim=0)
-        fig = pp_matrix_from_data(figsize=(4, 4), y_test=y_id, predictions=pred_id, pred_val_axis="x", cmap="Oranges", annot=False, columns=range(pl_module.num_classes))
+        fig = pp_matrix_from_data(figsize=(8, 8), y_test=y_id, predictions=pred_id, pred_val_axis="x", cmap="Oranges", annot=False, columns=range(pl_module.num_classes))
         cm_img = figure2pil(fig)
         plt.close()
         trainer.logger.log_image(key="val_epoch_cm", images=[cm_img], step=pl_module.current_epoch)

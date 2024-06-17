@@ -4,14 +4,12 @@ motti.append_parent_dir(__file__)
 thisfile = os.path.basename(__file__).split(".")[0]
 o_d = motti.o_d()
 
-
 # lightning
 import lightning as L
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
 
-import torch
 import numpy as np
 import itertools
 
@@ -20,45 +18,40 @@ from args import opts
 os.makedirs(opts.log_dir, exist_ok=True)
 os.makedirs(opts.ckpt_dir, exist_ok=True)
 
-from utils.confusion_matrix import LogConfusionMatrix
-
 # dataset
 from medmnist import PathMNIST
 from dataset import pathmnist_collate_fn
-from augmentation import  FinetuneTransform
+from augmentation import BarlowTwinPretainTransform
 from torch.utils.data import SubsetRandomSampler
 from utils.medmnist_subset import get_subset_indices
 
 # model
-from model.barlow_twins import BarlowTwinsPretain, BarlowTwinsForImageClassification
+from model.mae import LitViTMAEForPreTraining
 
 # utils
 from utils.cross_correlation import LogCrossCorrMatrix
 
-from functools import partial
-from typing import Sequence, Tuple, Union
+train_transform = BarlowTwinPretainTransform(img_size=opts.img_size, jitter_p=opts.jitter_p)
+val_transform = BarlowTwinPretainTransform(img_size=opts.img_size, jitter_p=opts.jitter_p)
 
-train_transform = FinetuneTransform(img_size=opts.img_size)
-val_transform = FinetuneTransform(img_size=opts.img_size)
 
 train_dataset = PathMNIST(
     split="train", download=False, 
     transform=train_transform,
     root="../../data/medmnist2d/",
-    size=64
+    size=64,
 )
 
 val_dataset = PathMNIST(
     split="val", download=False, 
     transform=val_transform,
     root="../../data/medmnist2d/",
-    size=64
+    size=64,
 )
 
 np.random.seed(42) # don't forget this
 subset_indices = get_subset_indices(dataset=train_dataset,  proportion=opts.proportion)
 subset_indices = list(itertools.chain(*subset_indices.values())) # inplace
-
 
 train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
@@ -74,30 +67,41 @@ val_loader = DataLoader(
     collate_fn=pathmnist_collate_fn,
 )
 
-if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
-    barlow_model = BarlowTwinsPretain.load_from_checkpoint(opts.ckpt)
-else:
-    raise FileNotFoundError("Checkpoint not found !")
+# z_dim = 1024
 
-model = BarlowTwinsForImageClassification(
-    pretrained_model=barlow_model,
-    num_classes=len(train_dataset.info["label"]),
-    criterion=torch.nn.CrossEntropyLoss(),
-    frozen=opts.frozen,
-    warmup_steps=opts.warmup_epochs * len(train_loader),
+# if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
+#     barlow_model = BarlowTwinsPretain.load_from_checkpoint(
+#         opts.ckpt,
+#         lr = opts.lr,
+#         z_dim=z_dim,
+#         warmup_steps=opts.warmup_epochs * len(train_loader), 
+#         train_steps=opts.max_epochs * len(train_loader),
+#     )
+# else:
+#     barlow_model = BarlowTwinsPretain(
+#         lr = opts.lr,
+#         z_dim=z_dim,
+#         warmup_steps=opts.warmup_epochs * len(train_loader), 
+#         train_steps=opts.max_epochs * len(train_loader),
+#     )
+
+
+model = LitViTMAEForPreTraining(
+    lr=opts.lr,
+    warmup_steps=opts.warmup_epochs * len(train_loader), 
     train_steps=opts.max_epochs * len(train_loader),
 )
 
 checkpoint_callback = ModelCheckpoint(
     save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
-    monitor="val_acc", mode="max"
+    monitor="val_loss", mode="min"
 )
 
 wandblogger = WandbLogger(
     name=f"{o_d}_{thisfile}_{opts.ps}", 
     save_dir=opts.log_dir, 
-    project="barlow_twins",
+    project=opts.project,
 )
 
 trainer = L.Trainer(
@@ -108,8 +112,7 @@ trainer = L.Trainer(
     logger=wandblogger,
     accumulate_grad_batches=opts.accumulate_grad_batches,
     log_every_n_steps=opts.log_step,
-    # callbacks=[checkpoint_callback, LogConfusionMatrix()],
-    callbacks=[checkpoint_callback],
+    callbacks=[checkpoint_callback, LogCrossCorrMatrix()],
 )
 
 trainer.fit(
