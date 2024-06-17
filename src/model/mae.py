@@ -71,7 +71,3 @@ class LitViTMAEForPreTraining(L.LightningModule):
                 "scheduler": scheduler,
             }
         } 
-        
-    
-        
-        

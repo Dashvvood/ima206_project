@@ -71,7 +71,9 @@ parser.add_argument(
 parser.add_argument(
     "--jitter_p", type=float, default=0.5
 )
-
+parser.add_argument(
+    "--reuse", action="store_true", default=False,
+)
 opts, missing = parser.parse_known_args()
 
 print(f"{opts = }")

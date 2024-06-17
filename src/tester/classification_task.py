@@ -6,4 +6,8 @@ o_d = motti.o_d()
 
 import argparse
 
-def 
+argparse.ArgumentParser()
+
+parser.add_argument(
+    "--model", type=src, default="barlow_twins"
+)

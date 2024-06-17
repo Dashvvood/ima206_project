@@ -74,19 +74,27 @@ val_loader = DataLoader(
     collate_fn=pathmnist_collate_fn,
 )
 
-if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
+if opts.reuse and opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
+    model = BarlowTwinsForImageClassification.load_from_checkpoint(
+        num_classes=len(train_dataset.info["label"]),
+        criterion=torch.nn.CrossEntropyLoss(),
+        frozen=opts.frozen,
+        warmup_steps=opts.warmup_epochs * len(train_loader),
+        train_steps=opts.max_epochs * len(train_loader),
+    ) 
+elif opts.reuse is False and opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
     barlow_model = BarlowTwinsPretain.load_from_checkpoint(opts.ckpt)
+    model = BarlowTwinsForImageClassification(
+        pretrained_model=barlow_model,
+        num_classes=len(train_dataset.info["label"]),
+        criterion=torch.nn.CrossEntropyLoss(),
+        frozen=opts.frozen,
+        warmup_steps=opts.warmup_epochs * len(train_loader),
+        train_steps=opts.max_epochs * len(train_loader),
+    )
 else:
     raise FileNotFoundError("Checkpoint not found !")
 
-model = BarlowTwinsForImageClassification(
-    pretrained_model=barlow_model,
-    num_classes=len(train_dataset.info["label"]),
-    criterion=torch.nn.CrossEntropyLoss(),
-    frozen=opts.frozen,
-    warmup_steps=opts.warmup_epochs * len(train_loader),
-    train_steps=opts.max_epochs * len(train_loader),
-)
 
 checkpoint_callback = ModelCheckpoint(
     save_top_k=1, save_last=True,

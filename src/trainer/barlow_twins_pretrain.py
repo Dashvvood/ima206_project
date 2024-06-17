@@ -85,7 +85,6 @@ else:
         train_steps=opts.max_epochs * len(train_loader),
     )
 
-
 checkpoint_callback = ModelCheckpoint(
     save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
