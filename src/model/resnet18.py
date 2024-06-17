@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import resnet18
-from transformers import get_cosine_schedule_with_warmup
+# from transformers import get_cosine_schedule_with_warmup
+from utils.cos_warmup_scheduler import get_cosine_schedule_with_warmup
 from torchmetrics import Accuracy
 
 import lightning as L
