@@ -25,6 +25,18 @@ def get_test_loader(root="../../data/medmnist2d"):
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=128, num_workers=8, collate_fn=pathmnist_collate_fn)
     return test_loader
 
+def get_val_loader(root="../../data/medmnist2d"):
+    test_transforms = transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=PathMNIST_MEAN, std=PathMNIST_STD)
+    ])
+
+    test_dataset = PathMNIST(split="val", root=root, transform=test_transforms, size=64)
+    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=128, num_workers=8, collate_fn=pathmnist_collate_fn)
+    return test_loader
+
+
 @torch.no_grad()
 def test_loop(model, dataloader):
     probs = []

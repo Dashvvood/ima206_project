@@ -18,7 +18,6 @@ from dataset import pathmnist_collate_fn
 from constant import PathMNISTmeta
 import torchvision.transforms as transforms
 
-import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
@@ -69,14 +68,16 @@ train_loader = DataLoader(
     num_workers=opts.num_workers, 
     drop_last=True,
     collate_fn=pathmnist_collate_fn,
-    sampler=SubsetRandomSampler(indices=subset_indices), # this line will shuffle the indice each epoch
+    sampler=SubsetRandomSampler(indices=subset_indices), # this line will shuffle the indice each epoch,
+    pin_memory=True,
 )
 
 val_loader = DataLoader(
     val_dataset, batch_size=opts.batch_size, 
     shuffle=False, num_workers=opts.num_workers, 
     drop_last=False,
-    collate_fn=pathmnist_collate_fn
+    collate_fn=pathmnist_collate_fn,
+    pin_memory=True,
 )
 
 if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
@@ -86,7 +87,8 @@ if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
         num_classes=len(train_dataset.info["label"]), 
         warmup_steps=opts.warmup_epochs * len(train_loader), 
         train_steps=opts.max_epochs * len(train_loader),
-        criterion= nn.CrossEntropyLoss()
+        criterion= nn.CrossEntropyLoss(),
+        from_epoch=opts.from_epoch,
     )
 else:
     model = ResNet18Classifier(
@@ -94,7 +96,8 @@ else:
         num_classes=len(train_dataset.info["label"]), 
         warmup_steps=opts.warmup_epochs * len(train_loader), 
         train_steps=opts.max_epochs * len(train_loader),
-        criterion= nn.CrossEntropyLoss()
+        criterion= nn.CrossEntropyLoss(),
+        from_epoch=opts.from_epoch,
     )
 
 checkpoint_callback = ModelCheckpoint(

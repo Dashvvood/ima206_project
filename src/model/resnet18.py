@@ -31,7 +31,7 @@ class ResNet18ClassifierOutput:
     
 
 class ResNet18Classifier(L.LightningModule):
-    def __init__(self, lr, num_classes, criterion, warmup_steps, train_steps, save_training_output=False) -> None:
+    def __init__(self, lr, num_classes, criterion, warmup_steps, train_steps, save_training_output=False, from_epoch=0) -> None:
         super().__init__()
         self.save_hyperparameters()
         
@@ -51,6 +51,8 @@ class ResNet18Classifier(L.LightningModule):
         # Epoch-level Operations
         self.save_training_output = save_training_output
         self.training_step_output: ResNet18ClassifierOutput = None
+        
+        self.current_epoch = from_epoch
         
     @staticmethod
     def _resnet18_n_class(num_classes):
