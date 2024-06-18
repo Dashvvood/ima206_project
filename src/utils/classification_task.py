@@ -13,7 +13,20 @@ from tqdm import tqdm
 from dataset import pathmnist_collate_fn
 from utils.confusion_matrix import pp_matrix_from_data
 
+from dataclasses import dataclass
+from typing import Any
 
+
+@dataclass
+class ClassificationOutput:
+    prob: torch.Tensor
+    pred_id: torch.Tensor
+    y_id: torch.Tensor
+    cm: Any
+
+def get_embeddings(model, dataloader):
+    pass
+    
 def get_test_loader(root="../../data/medmnist2d"):
     test_transforms = transforms.Compose([
         transforms.Resize((64, 64)),
@@ -38,7 +51,7 @@ def get_val_loader(root="../../data/medmnist2d"):
 
 
 @torch.no_grad()
-def test_loop(model, dataloader):
+def inference_loop(model, dataloader):
     probs = []
     ys = []
     for batch_idx, batch in tqdm(enumerate(dataloader)):
@@ -53,4 +66,6 @@ def test_loop(model, dataloader):
     pred_id = torch.cat(probs, dim=0).argmax(dim=1)
     y_id = torch.cat(ys, dim=0)
     return prob, pred_id, y_id
+
+
         

@@ -64,7 +64,8 @@ train_loader = DataLoader(
     train_dataset, batch_size=opts.batch_size, 
     num_workers=opts.num_workers, drop_last=True,
     collate_fn=pathmnist_collate_fn,
-    sampler=SubsetRandomSampler(indices=subset_indices)
+    sampler=SubsetRandomSampler(indices=subset_indices),
+    pin_memory=True,
 )
 
 val_loader = DataLoader(
@@ -72,6 +73,7 @@ val_loader = DataLoader(
     shuffle=False, num_workers=opts.num_workers, 
     drop_last=False,
     collate_fn=pathmnist_collate_fn,
+    pin_memory=True,
 )
 
 if opts.reuse and opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
@@ -83,6 +85,7 @@ if opts.reuse and opts.ckpt is not None and opts.ckpt != "" and os.path.exists(o
         frozen=opts.frozen,
         warmup_steps=opts.warmup_epochs * len(train_loader),
         train_steps=opts.max_epochs * len(train_loader),
+        from_epoch=opts.from_epoch,
     ) 
 elif opts.reuse is False and opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
     barlow_model = BarlowTwinsPretain.load_from_checkpoint(opts.ckpt)
@@ -94,6 +97,7 @@ elif opts.reuse is False and opts.ckpt is not None and opts.ckpt != "" and os.pa
         frozen=opts.frozen,
         warmup_steps=opts.warmup_epochs * len(train_loader),
         train_steps=opts.max_epochs * len(train_loader),
+        from_epoch=opts.from_epoch,
     )
 else:
     raise FileNotFoundError("Checkpoint not found !")
@@ -103,6 +107,11 @@ checkpoint_callback = ModelCheckpoint(
     save_top_k=1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d),
     monitor="val_loss", mode="min"
+)
+
+checkpoint_callback2 = ModelCheckpoint(
+    dirpath=os.path.join(opts.ckpt_dir, o_d, "every_n_epoch"),
+    every_n_epochs=opts.max_epochs // 10,
 )
 
 wandblogger = WandbLogger(
@@ -120,7 +129,7 @@ trainer = L.Trainer(
     accumulate_grad_batches=opts.accumulate_grad_batches,
     log_every_n_steps=opts.log_step,
     # callbacks=[checkpoint_callback, LogConfusionMatrix()],
-    callbacks=[checkpoint_callback],
+    callbacks=[checkpoint_callback, checkpoint_callback2],
 )
 
 trainer.fit(
