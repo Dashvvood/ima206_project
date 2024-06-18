@@ -93,6 +93,7 @@ class BarlowTwinsPretain(L.LightningModule):
         warmup_steps=1e3,
         train_steps=1e5,
         save_training_output=False,
+        from_epoch=0,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -109,6 +110,8 @@ class BarlowTwinsPretain(L.LightningModule):
         
         self.save_training_output = save_training_output
         self.training_step_output: BarlowTwinsOutput = None
+        
+        self.from_epoch = from_epoch
         
     @staticmethod
     def _resnet18_backbone():
@@ -129,14 +132,21 @@ class BarlowTwinsPretain(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         out = self.shared_step(batch)
-        self.log("train_loss", out.loss, on_step=True, on_epoch=True)
+        self.log_dict({
+            "train_loss": out.loss,
+            "custom_epoch": self.current_epoch + self.from_epoch,
+        }, on_step=False, on_epoch=True)
+        
         if self.save_training_output:
             self.training_step_output = out
         return out.loss
 
     def validation_step(self, batch, batch_idx):
         out = self.shared_step(batch)
-        self.log("val_loss", out.loss, on_step=False, on_epoch=True)
+        self.log_dict({
+            "train_loss": out.loss,
+            "custom_epoch": self.current_epoch + self.from_epoch,
+        }, on_step=False, on_epoch=True)
         return out
     
     def configure_optimizers(self):
@@ -178,6 +188,7 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         train_steps=1e5,
         frozen=True,
         save_training_output=False,
+        from_epoch=0
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -203,6 +214,8 @@ class BarlowTwinsForImageClassification(L.LightningModule):
 
         self.save_training_output = save_training_output
         self.training_step_output: BarlowTwinsOutput = None
+        
+        self.from_epoch = from_epoch
         
     def forward(self, inputs):
         x = self.pretrained_model(inputs)
@@ -241,7 +254,10 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         X, y = batch
         out = self(X)
         loss = self.criterion(out, y)
-        self.log("train_loss", loss, on_step=True, on_epoch=True)
+        self.log_dict({
+            "train_loss": loss,
+            "custom_epoch": self.current_epoch + self.from_epoch,
+        }, on_step=False, on_epoch=True)
         
         if self.save_training_output:
             self.training_step_output = BarlowTwinsForImageClassificationOutput(X=X, y=y, out=out, loss=loss)
@@ -255,7 +271,8 @@ class BarlowTwinsForImageClassification(L.LightningModule):
         val_acc = self.acc(out, y)
         self.log_dict({
             "val_loss": loss,
-            "val_acc": val_acc
+            "val_acc": val_acc,
+            "custom_epoch": self.current_epoch + self.from_epoch,
         }, on_step=False, on_epoch=True)
 
         return BarlowTwinsForImageClassificationOutput(X=X, y=y, out=out, loss=loss)

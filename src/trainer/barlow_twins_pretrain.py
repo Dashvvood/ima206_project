@@ -76,6 +76,7 @@ if opts.ckpt is not None and opts.ckpt != "" and os.path.exists(opts.ckpt):
         z_dim=z_dim,
         warmup_steps=opts.warmup_epochs * len(train_loader), 
         train_steps=opts.max_epochs * len(train_loader),
+        from_epoch=opts.from_epoch,
     )
 else:
     barlow_model = BarlowTwinsPretain(
@@ -83,6 +84,7 @@ else:
         z_dim=z_dim,
         warmup_steps=opts.warmup_epochs * len(train_loader), 
         train_steps=opts.max_epochs * len(train_loader),
+        from_epoch=opts.from_epoch,
     )
 
 checkpoint_callback = ModelCheckpoint(
