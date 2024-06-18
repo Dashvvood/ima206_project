@@ -144,7 +144,7 @@ class BarlowTwinsPretain(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         out = self.shared_step(batch)
         self.log_dict({
-            "train_loss": out.loss,
+            "val_loss": out.loss,
             "custom_epoch": self.current_epoch + self.from_epoch,
         }, on_step=False, on_epoch=True)
         return out
