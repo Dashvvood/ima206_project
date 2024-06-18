@@ -6,7 +6,8 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def get_tsne(x, title="T-SNE projection", num_classes=1):
+
+def get_tsne(x, y, title="T-SNE projection", num_classes=1):
     tsne = TSNE(n_components=2, verbose=1, random_state=123)
     z = tsne.fit_transform(x)
     df = pd.DataFrame()

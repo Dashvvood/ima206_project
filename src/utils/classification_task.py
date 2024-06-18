@@ -15,7 +15,7 @@ from utils.confusion_matrix import pp_matrix_from_data
 
 from dataclasses import dataclass
 from typing import Any
-
+import numpy as np
 
 @dataclass
 class ClassificationOutput:
@@ -25,7 +25,18 @@ class ClassificationOutput:
     cm: Any
 
 def get_embeddings(model, dataloader):
-    pass
+    feats = []
+    ys = []
+    for batch in tqdm(dataloader):
+        X, y = batch
+        X = X.to(model.device)
+        feat = model(X)
+        ys.append(y.cpu().detach().numpy())
+        feats.append(feat.cpu().detach().numpy())
+    feats = np.concatenate(feats, axis=0)
+    ys = np.concatenate(ys, axis=0)
+    return feats, ys
+
     
 def get_test_loader(root="../../data/medmnist2d"):
     test_transforms = transforms.Compose([

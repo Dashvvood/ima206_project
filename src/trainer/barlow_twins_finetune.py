@@ -110,9 +110,11 @@ checkpoint_callback = ModelCheckpoint(
 )
 
 checkpoint_callback2 = ModelCheckpoint(
+    save_top_k=-1, save_last=True,
     dirpath=os.path.join(opts.ckpt_dir, o_d, "every_n_epoch"),
     every_n_epochs=opts.max_epochs // 10,
 )
+
 
 wandblogger = WandbLogger(
     name=f"{o_d}_{thisfile}_{opts.ps}", 
