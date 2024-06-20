@@ -1,8 +1,11 @@
 # ima206_project
 
+
 ## Github Usage
 
+
 1. Clone this [repository](https://github.com/Lupin2019/ima206_project.git)
+
 
 2. create a new branch base on `main` branch
 
