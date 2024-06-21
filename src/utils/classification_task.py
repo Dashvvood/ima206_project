@@ -24,6 +24,7 @@ class ClassificationOutput:
     y_id: torch.Tensor
     cm: Any
 
+@torch.no_grad()
 def get_embeddings(model, dataloader):
     feats = []
     ys = []
@@ -37,6 +38,19 @@ def get_embeddings(model, dataloader):
     ys = np.concatenate(ys, axis=0)
     return feats, ys
 
+@torch.no_grad()
+def get_embeddings_ft(model, dataloader):
+    feats = []
+    ys = []
+    for batch in tqdm(dataloader):
+        X, y = batch
+        X = X.to(model.device)
+        feat = model._feature_extractor(X)
+        ys.append(y.cpu().detach().numpy())
+        feats.append(feat.cpu().detach().numpy())
+    feats = np.concatenate(feats, axis=0)
+    ys = np.concatenate(ys, axis=0)
+    return feats, ys
     
 def get_test_loader(root="../../data/medmnist2d"):
     test_transforms = transforms.Compose([
